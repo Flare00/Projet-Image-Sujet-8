@@ -9,4 +9,4 @@ Khélian LARVET
 (University of Montpellier : M2 IMAGINE, 2022-2023)
 
 ## Languages and tools used
-- Python 
+- Python Imaging Library (PIL)
