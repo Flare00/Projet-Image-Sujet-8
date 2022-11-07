@@ -2,35 +2,58 @@
 from PIL import Image, ImageFilter
 import random
 
-def imgPixelate(img, n):
-    return img.resize((n,n), resample=Image.Resampling.BILINEAR).resize(img.size, Image.Resampling.NEAREST)
+# min et max sont des tuples (x,y)
+def cropImage(img, min, max):
+    width, height = img.size
+    if min[0] >= 0 and min[1] < width and max[0] >= 0 and max[1] < height:
+            # Area : Left - Up - Right - Below
+            area = (min[0], min[1], max[0], max[1])
+            cropped_img = img.crop(area)
+            return cropped_img
+    else:
+        raise Exception("Error Size cropImage()") 
 
-def imgBlurring(img, n):
-    return img.filter(ImageFilter.GaussianBlur(n))
-
-def imgRandomNoise(img, chance, randomPix: bool): #Replace random pixel by black
+def imgPixelate(img, largeurPX, min, max):
     res = img.copy()
-    for x in range(img.width):
-        for y in range (img.height):
+    nX = int((max[0]-min[0]) / largeurPX)
+    nY = int((max[1]-min[1]) / largeurPX)
+    crop = cropImage(img, min, max)
+    res.paste(crop.resize((nX,nY), resample=Image.Resampling.BILINEAR).resize(crop.size, Image.Resampling.NEAREST), min)
+    return res
+
+
+def imgBlurring(img, n, min, max):
+    res = img.copy()
+    crop = cropImage(img, min, max)
+    res.paste(crop.filter(ImageFilter.GaussianBlur(n)), min)
+    return res
+
+def imgRandomNoise(img, chance, randomPix: bool, min, max): #Replace random pixel by black
+    res = img.copy()
+    crop = cropImage(img, min, max)
+    for x in range(crop.width):
+        for y in range (crop.height):
             if(random.random() < chance):
                 val = 0
                 if(randomPix):
-                    if(len(res.getpixel((x,y))) == 1):
+                    if(len(crop.getpixel((x,y))) == 1):
                         val = (random.randint(0,255))
-                    if(len(res.getpixel((x,y))) == 3):
+                    if(len(crop.getpixel((x,y))) == 3):
                         val = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-                    if(len(res.getpixel((x,y))) == 4):
+                    if(len(crop.getpixel((x,y))) == 4):
                         val = (random.randint(0,255), random.randint(0,255), random.randint(0,255), 255)
-                res.putpixel((x,y), val)
+                crop.putpixel((x,y), val)
+    res.paste(crop, min)
     return res
 
 
 #replace some bits of all pixel, according to the mode, if its msb and number of bits
-def imgFullNoise(img, nbBit, msb : bool, mode): #mode = 0 : remplace par des 0, 1 : remplace par des 1, 2 : random
+def imgFullNoise(img, nbBit, msb : bool, mode, min, max): #mode = 0 : remplace par des 0, 1 : remplace par des 1, 2 : random
     res = img.copy()
-    for x in range(img.width):
-        for y in range (img.height):
-            pix = res.getpixel((x,y))
+    crop = cropImage(img, min, max)
+    for x in range(crop.width):
+        for y in range (crop.height):
+            pix = crop.getpixel((x,y))
             pixVal = list(pix)
 
             for c in range(len(pix)):
@@ -51,5 +74,6 @@ def imgFullNoise(img, nbBit, msb : bool, mode): #mode = 0 : remplace par des 0, 
                     pixVal[c] = (pixVal[c] & mask) | noise
 
             pix = tuple(pixVal)
-            res.putpixel((x,y), pix)
+            crop.putpixel((x,y), pix)
+    res.paste(crop, min)
     return res
