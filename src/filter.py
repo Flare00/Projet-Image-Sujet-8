@@ -53,27 +53,3 @@ def imgFullNoise(img, nbBit, msb : bool, mode): #mode = 0 : remplace par des 0, 
             pix = tuple(pixVal)
             res.putpixel((x,y), pix)
     return res
-
-        
-        
-
-def main():
-    # Image input with size
-    img = Image.open("rock.jpg")
-
-    imgRandNoise = imgRandomNoise(img, 0.5, True)
-    imgNoise = imgFullNoise(img, 2, True, 2)
-    # Processing
-    imgPixel = imgPixelate(img, 16)
-    imgBlur = imgBlurring(img, 5)
-    imgNoiseBlur = imgBlurring(imgNoise, 5)
-    # Save
-    
-    imgRandNoise.save('test_random_noise.png', 'png')
-    imgNoiseBlur.save('test_noise_blur.png', 'png')
-    imgNoise.save('test_full_noise.png', 'png')
-    imgPixel.save('test_pixel.png', 'png')
-    imgBlur.save('test_blur.png', 'png')
-
-if __name__== "__main__":
-    main()
