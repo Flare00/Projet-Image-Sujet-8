@@ -36,13 +36,24 @@ class Interface:
 
         butOpen.pack(side="right")
 
-        self.canvas = Canvas(self.root)
-        self.canvas.pack(side="left")
+        self.canvas = Canvas(self.root, bg='blue')
+        self.canvas.pack( expand=True,fill=BOTH, side="left")
 
     def openImage(self):
         f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
-        filename = filedialog.askopenfile(filetypes=f_types)
+        filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./")
 
-        print(filename)
-        self.img = ImageTk.PhotoImage(file=filename.name)
-        self.canvas.create_image(0,0, anchor="nw", image = self.img)
+        self.img = Image.open(filename.name)
+        nH = self.img.height
+        nW = self.img.width
+        
+        if self.canvas.winfo_height() * (nW/nH) <= self.canvas.winfo_width():
+            nW = int(self.canvas.winfo_height() * (nW/nH))
+            nH = int(self.canvas.winfo_height())
+        else :
+            nH = int(self.canvas.winfo_width() / (nW/nH))
+            nW = int(self.canvas.winfo_width())
+        rs = self.img.resize((nW, nH))
+        self.display = ImageTk.PhotoImage(rs)
+
+        self.canvas.create_image(self.canvas.winfo_width()/2,self.canvas.winfo_height()/2.0, anchor=CENTER, image = self.display)
