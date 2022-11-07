@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import PIL.Image
 import os
-from tkinter import * 
 
 import src.filter as filter
-
+import src.interface as interface
 outputFolder = "output/"
 
 def main():
@@ -29,14 +28,8 @@ def main():
     # imgNoiseBlur.save(outputFolder+'test_noise_blur.png', 'png')
 
     # Interface
-    # initInterface()
-
-def initInterface():
-    global fenetre, label
-    fenetre = Tk()
-    label = Label(fenetre, text="Fenetre")
-    label.pack()
-    fenetre.mainloop()
+    interface.initInterface()
+    interface.startInterface()
 
 if __name__== "__main__":
     main()
