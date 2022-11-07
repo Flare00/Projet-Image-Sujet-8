@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 from PIL import Image
+from tkinter import * 
+
 import filter
 
 def main():
+
+    initInterface()
+
     # Image input with size
     img = Image.open("ex.png")
 
@@ -20,6 +25,13 @@ def main():
     imgNoise.save('test_full_noise.png', 'png')
     imgPixel.save('test_pixel.png', 'png')
     imgBlur.save('test_blur.png', 'png')
+
+def initInterface():
+    global fenetre, label
+    fenetre = Tk()
+    label = Label(fenetre, text="Fenetre")
+    label.pack()
+    fenetre.mainloop()
 
 if __name__== "__main__":
     main()
