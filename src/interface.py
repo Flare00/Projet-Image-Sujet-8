@@ -20,6 +20,10 @@ class Select:
         self.min = min
         self.max = max
         self.element = element
+        self.filter = None
+
+    def setFiler(self, filter) :
+        self.filter = filter
 
 class Interface:
 
@@ -46,7 +50,7 @@ class Interface:
         #Create Elements
         labelHelper = Label(text="Left Click Drag : Create a selection | Scroll : Zoom | Right Click Drag : Pan")
         self.labelZoom = Label(text="Zoom = x1")
-        butOpen = Button(self.root, text="Open Image", justify="center", command=self.openImage)
+       
 
         self.canvas = Canvas(self.root, bg='blue')
         self.canvas.bind_all("<MouseWheel>", self.canvasZoom)
@@ -56,16 +60,58 @@ class Interface:
         self.canvas.bind_all("<ButtonRelease-3>", self.canvasPanStop)
 
         self.canvas.bind_all("<Button-1>", self.selectionStart)
-        
         self.canvas.bind_all("<B1-Motion>", self.selectionMotion)
         self.canvas.bind_all("<ButtonRelease-1>", self.selectionEnd)
+
+        #Zone Bouttons
+        self.zoneButtons = Frame(self.root, width=200)
+        butOpen = Button(self.zoneButtons, text="Open Image", justify="center", command=self.openImage)
+        #selections Filtres
+        self.filtrageValue = StringVar()
+        self.filtrageValue.set("pixel")
+        self.rPixel = Radiobutton(self.zoneButtons, text="Pixelization", variable=self.filtrageValue, value="pixel", command=self.radioButtonChanged)
+        self.rGauss = Radiobutton(self.zoneButtons, text="Gaussian Blur", variable=self.filtrageValue, value="gauss", command=self.radioButtonChanged)
+        self.rPNoise = Radiobutton(self.zoneButtons, text="Partial Destructive Noise", variable=self.filtrageValue, value="partnoise", command=self.radioButtonChanged)
+        self.rBitNoise = Radiobutton(self.zoneButtons, text="Full Bit Noise", variable=self.filtrageValue, value="bitnoise", command=self.radioButtonChanged)
+
+        butApplyFilter = Button(self.zoneButtons, text="Apply Filter", justify="center", command=self.applyFilter)
+
+        #Liste Selections
+        self.listSelectionTk = Listbox(self.zoneButtons)
+        
+        self.listSelectionTk.bind('<<ListboxSelect>>', self.listChangeSelected)
+        butDelete = Button(self.zoneButtons, text="Delete Selection", justify="center", command=self.deleteSelection)
+
+        #Buttons CNN
+        self.zoneCNN = Frame(self.zoneButtons)
+        butDetection= Button(self.zoneCNN, text="Detection", justify="center", command=self.askCNN)
+        butEvaluation= Button(self.zoneCNN, text="Evaluation", justify="center", command=self.askCNN)
+
+#----
 
 
         #elements Placement
         labelHelper.pack( fill=X, side=TOP)
         self.labelZoom.pack( fill=X, side=BOTTOM)
         self.canvas.pack( expand=True,fill=BOTH, side=LEFT)
-        butOpen.pack(side=RIGHT)
+
+        self.zoneButtons.pack(expand=False, side=RIGHT, fill=Y)
+        self.zoneButtons.pack_propagate(0)
+        #zoneButtons
+        butOpen.pack(side=TOP, fill=X)
+        self.rPixel.pack(side=TOP, fill=X)
+        self.rGauss.pack(side=TOP, fill=X)
+        self.rPNoise.pack(side=TOP, fill=X)
+        self.rBitNoise.pack(side=TOP, fill=X)
+        butApplyFilter.pack(side=TOP, fill=X)
+
+        self.listSelectionTk.pack(side=TOP, fill=X)
+        butDelete.pack(side=TOP, fill=X)
+
+        self.zoneCNN.pack(side=BOTTOM, fill=X)
+        #zone CNN
+        butDetection.pack(side=LEFT, fill=X)
+        butEvaluation.pack(side=RIGHT, fill=X)
 
     def openImage(self):
         f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
@@ -170,6 +216,7 @@ class Interface:
                 sel = self.computeImageSelection(min, max)
                 if sel is not None :
                     self.selections.append(sel)
+                    self.listSelectionTk.insert(0, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
             self.canvas.delete(self.selectHelper)
 
     def computeImageSelection(self, min, max):
@@ -204,6 +251,14 @@ class Interface:
         if(imgSelMin[0] == imgSelMax[0] or imgSelMin[1] == imgSelMax[1]):
             return None
 
+        exist = False
+
+        for s in self.selections:
+            if(s.filter == None and s.min == imgSelMin and s.max == imgSelMax ):
+                exist = True
+        if(exist):
+            return None
+
         element = self.canvas.create_rectangle(min[0], min[1], max[0], max[1], outline="#0f0")
         res = Select(imgSelMin, imgSelMax, element)
         self.updateSelectionZoom(res, minSelCan, wRatio, hRatio)
@@ -226,3 +281,26 @@ class Interface:
 
         for e in self.selections:   
             self.updateSelectionZoom(e, minSelCan, wRatio, hRatio)
+
+    def radioButtonChanged(self):
+        print(self.filtrageValue.get())
+
+    def applyFilter(self):
+        print("Apply")
+
+    def askCNN(self):
+        print("CNN")
+    
+    def listChangeSelected(self, event):
+        index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
+        for i in range(len(self.selections)):
+            if i == index:
+                self.canvas.itemconfig(self.selections[i].element, outline="#ff0")
+            else :
+                self.canvas.itemconfig(self.selections[i].element, outline="#0f0")
+
+    def deleteSelection(self):
+        index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
+        self.listSelectionTk.delete(index)
+        self.canvas.delete(self.selections[index].element)
+        self.selections.remove(self.selections[index])
