@@ -110,8 +110,8 @@ class Interface:
 
         self.zoneCNN.pack(side=BOTTOM, fill=X)
         #zone CNN
-        butDetection.pack(side=LEFT, fill=X)
-        butEvaluation.pack(side=RIGHT, fill=X)
+        butDetection.pack( expand=True,side=LEFT, fill=X)
+        butEvaluation.pack( expand=True ,side=RIGHT, fill=X)
 
     def openImage(self):
         f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
@@ -292,15 +292,17 @@ class Interface:
         print("CNN")
     
     def listChangeSelected(self, event):
-        index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
-        for i in range(len(self.selections)):
-            if i == index:
-                self.canvas.itemconfig(self.selections[i].element, outline="#ff0")
-            else :
-                self.canvas.itemconfig(self.selections[i].element, outline="#0f0")
+        if self.listSelectionTk.size() > 0 :
+            index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
+            for i in range(len(self.selections)):
+                if i == index:
+                    self.canvas.itemconfig(self.selections[i].element, outline="#ff0")
+                else :
+                    self.canvas.itemconfig(self.selections[i].element, outline="#0f0")
 
     def deleteSelection(self):
-        index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
-        self.listSelectionTk.delete(index)
-        self.canvas.delete(self.selections[index].element)
-        self.selections.remove(self.selections[index])
+        if self.listSelectionTk.size() > 0 :
+            index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
+            self.listSelectionTk.delete(index)
+            self.canvas.delete(self.selections[index].element)
+            self.selections.remove(self.selections[index])
