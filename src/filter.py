@@ -5,7 +5,7 @@ import random
 # min et max sont des tuples (x,y)
 def cropImage(img, min, max):
     width, height = img.size
-    if min[0] >= 0 and min[1] < width and max[0] >= 0 and max[1] < height:
+    if min[0] >= 0 and max[0] <= width and min[1] >= 0 and max[1] <= height:
             # Area : Left - Up - Right - Below
             area = (min[0], min[1], max[0], max[1])
             cropped_img = img.crop(area)
