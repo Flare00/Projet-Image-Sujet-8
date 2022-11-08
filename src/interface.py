@@ -15,8 +15,14 @@ def initInterface():
 def startInterface():
     global app
     app.root.mainloop()
+class Select:
+    def __init__(self, min : tuple, max : tuple, element):
+        self.min = min
+        self.max = max
+        self.element = element
 
 class Interface:
+
     def __init__(self):
         self.zoomMax = 10
         self.zoomMin = -10
@@ -27,6 +33,8 @@ class Interface:
         self.panLastPosition = (-1,-1)
         self.root = Tk()
         self.root.title = 'Safe-Eye'
+        self.selfirstPos = (0,0)
+        self.selections = []
         width = 800
         height = 600
         screenWidth = self.root.winfo_screenwidth()
@@ -42,10 +50,15 @@ class Interface:
 
         self.canvas = Canvas(self.root, bg='blue')
         self.canvas.bind_all("<MouseWheel>", self.canvasZoom)
+
         self.canvas.bind_all("<B3-Motion>", self.canvasPan)
         self.canvas.bind_all("<Button-3>", self.canvasPanStart)
         self.canvas.bind_all("<ButtonRelease-3>", self.canvasPanStop)
 
+        self.canvas.bind_all("<Button-1>", self.selectionStart)
+        
+        self.canvas.bind_all("<B1-Motion>", self.selectionMotion)
+        self.canvas.bind_all("<ButtonRelease-1>", self.selectionEnd)
 
 
         #elements Placement
@@ -66,6 +79,9 @@ class Interface:
             if hasattr(self, 'canImg'):
                 self.canvas.itemconfig(self.canImg, image = self.display, anchor=CENTER)
                 self.canvas.moveto(self.canImg, (self.canvas.winfo_width()/2) - (self.display.width()/2), (self.canvas.winfo_height()/2) - (self.display.height()/2))
+                for e in self.selections:  
+                    self.canvas.delete(e.element)
+                self.selections.clear()
             else :
                 self.canImg = self.canvas.create_image(self.canvas.winfo_width()/2,self.canvas.winfo_height()/2.0, anchor=CENTER, image = self.display)
 
@@ -93,6 +109,7 @@ class Interface:
             
             self.labelZoom.config(text = f"Zoom = x{self.zoomDisplayNumber()}")
             self.canvas.itemconfig(self.canImg, image = self.display)
+            self.updateAllSelectionsZoom()
 
     def canvasPanStart(self, event):
         self.isPanning = True
@@ -109,14 +126,103 @@ class Interface:
                 delta = (event.x - self.panLastPosition[0], event.y - self.panLastPosition[1])
                 self.panLastPosition = (event.x, event.y)
 
-                
                 coords = self.canvas.coords(self.canImg)
                 coords[0] = coords[0] + delta[0]*self.panSpeed
                 coords[1] = coords[1] + delta[1]*self.panSpeed
                 
-                bounds = self.canvas.bbox(self.canImg)
                 w2 = self.display.width()/2
                 h2 = self.display.height()/2
                 
                 if (coords[0] + w2 > self.panBorderLimit) and (coords[0] - w2 < self.canvas.winfo_width()-self.panBorderLimit) and (coords[1] + h2 > self.panBorderLimit) and (coords[1] - h2 < self.canvas.winfo_height()-self.panBorderLimit) :
                     self.canvas.move(self.canImg, delta[0]*self.panSpeed, delta[1]*self.panSpeed)
+                    for sel in self.selections:
+                        self.canvas.move(sel.element, delta[0]*self.panSpeed, delta[1]*self.panSpeed)
+
+    def selectionStart(self, event):
+        self.selfirstPos = (event.x, event.y)
+
+    def selectionMotion(self, event):
+        if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
+            if hasattr(self, 'selectHelper'):
+                self.canvas.delete(self.selectHelper)
+
+            self.selectHelper = self.canvas.create_rectangle(event.x, event.y, self.selfirstPos[0], self.selfirstPos[1], outline="#f00")
+
+    def selectionEnd(self, event):
+        if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
+            min = [0,0]
+            max = [0,0]
+            if(event.x < self.selfirstPos[0]):
+                min[0] = event.x
+                max[0] = self.selfirstPos[0]
+            else :
+                min[0] = self.selfirstPos[0]
+                max[0] = event.x
+
+            if(event.y < self.selfirstPos[1]):
+                min[1] = event.y
+                max[1] = self.selfirstPos[1]
+            else :
+                min[1] = self.selfirstPos[1]
+                max[1] = event.y
+
+            if hasattr(self, 'canImg'):
+                sel = self.computeImageSelection(min, max)
+                if sel is not None :
+                    self.selections.append(sel)
+            self.canvas.delete(self.selectHelper)
+
+    def computeImageSelection(self, min, max):
+        coords = self.canvas.coords(self.canImg)
+        w2 = self.display.width()/2
+        h2 = self.display.height()/2
+        
+        minSelCan = (coords[0] - w2 , coords[1] - h2)
+        maxSelCan = (coords[0] + w2 , coords[1] + h2)
+
+        if(max[0] <= minSelCan[0] or max[1] <= minSelCan[1] or min[0] >= maxSelCan[0] or min[1] >= maxSelCan[1]):
+            return None
+
+        for i in range(2):
+            if min[i] < minSelCan[i]:
+                min[i] = minSelCan[i]
+            if max[i] > maxSelCan[i]:
+                max[i] = maxSelCan[i]
+
+        wRatio =  self.display.width() / self.img.width()
+        hRatio =  self.display.width() / self.img.width()
+
+        imgSelMin = [0,0]
+        imgSelMax = [0,0]
+        
+        imgSelMin[0] = int((min[0] - minSelCan[0])/wRatio)
+        imgSelMax[0] = int((max[0] - minSelCan[0])/wRatio)
+        
+        imgSelMin[1] = int((min[1] - minSelCan[1])/hRatio)
+        imgSelMax[1] = int((max[1] - minSelCan[1])/hRatio)
+        
+        if(imgSelMin[0] == imgSelMax[0] or imgSelMin[1] == imgSelMax[1]):
+            return None
+
+        element = self.canvas.create_rectangle(min[0], min[1], max[0], max[1], outline="#0f0")
+        res = Select(imgSelMin, imgSelMax, element)
+        self.updateSelectionZoom(res, minSelCan, wRatio, hRatio)
+
+        return Select(imgSelMin, imgSelMax, element)
+
+    def updateSelectionZoom(self, sel : Select,posMin : tuple, wRatio, hRatio):
+        imgSelMin = (((sel.min[0])*wRatio) + posMin[0], ((sel.min[1])*hRatio) + posMin[1])
+        imgSelMax = (((sel.max[0])*wRatio) + posMin[0], ((sel.max[1])*hRatio) + posMin[1])
+        self.canvas.coords(sel.element, imgSelMin[0], imgSelMin[1], imgSelMax[0], imgSelMax[1])
+    
+    def updateAllSelectionsZoom(self):
+        coords = self.canvas.coords(self.canImg)
+        w2 = self.display.width()/2
+        h2 = self.display.height()/2
+        minSelCan = (coords[0] - w2 , coords[1] - h2)
+
+        wRatio =  self.display.width() / self.img.width()
+        hRatio =  self.display.width() / self.img.width()
+
+        for e in self.selections:   
+            self.updateSelectionZoom(e, minSelCan, wRatio, hRatio)
