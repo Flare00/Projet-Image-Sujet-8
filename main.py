@@ -4,6 +4,8 @@ import os
 
 import src.filter as filter
 import src.interface as interface
+import src.classifier as classifier
+
 outputFolder = "output/"
 
 def main():
@@ -26,6 +28,9 @@ def main():
     imgRandNoise.save(outputFolder+'test_random_noise.png', 'png')
     imgNoise.save(outputFolder+'test_full_noise.png', 'png')
     # imgNoiseBlur.save(outputFolder+'test_noise_blur.png', 'png')
+
+    # Classifier
+    # classifier.classifier()
 
     # Interface
     interface.initInterface()
