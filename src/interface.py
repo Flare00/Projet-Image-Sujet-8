@@ -6,6 +6,9 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter.filedialog import askopenfile
 from PIL import ImageTk, Image
+
+import src.filter as filter
+
 outputFolder = "output/"
 
 def initInterface():
@@ -21,9 +24,11 @@ class Select:
         self.max = max
         self.element = element
         self.filter = None
+        self.parameters = []
 
-    def setFiler(self, filter) :
+    def setFilter(self, filter, parameters) :
         self.filter = filter
+        self.parameters = parameters
 
 class Interface:
 
@@ -36,7 +41,7 @@ class Interface:
         self.isPanning = False
         self.panLastPosition = (-1,-1)
         self.root = Tk()
-        self.root.title = 'Safe-Eye'
+        self.root.title('Safe-Eye')
         self.selfirstPos = (0,0)
         self.selections = []
         width = 800
@@ -65,22 +70,29 @@ class Interface:
 
         #Zone Bouttons
         self.zoneButtons = Frame(self.root, width=200)
-        butOpen = Button(self.zoneButtons, text="Open Image", justify="center", command=self.openImage)
+        
+        self.butOpenFrame = Frame(self.zoneButtons)
+        butOpen = Button(self.butOpenFrame, text="Open Image", justify="center", command=self.openImage)
         #selections Filtres
         self.filtrageValue = StringVar()
         self.filtrageValue.set("pixel")
-        self.rPixel = Radiobutton(self.zoneButtons, text="Pixelization", variable=self.filtrageValue, value="pixel", command=self.radioButtonChanged)
-        self.rGauss = Radiobutton(self.zoneButtons, text="Gaussian Blur", variable=self.filtrageValue, value="gauss", command=self.radioButtonChanged)
-        self.rPNoise = Radiobutton(self.zoneButtons, text="Partial Destructive Noise", variable=self.filtrageValue, value="partnoise", command=self.radioButtonChanged)
-        self.rBitNoise = Radiobutton(self.zoneButtons, text="Full Bit Noise", variable=self.filtrageValue, value="bitnoise", command=self.radioButtonChanged)
 
-        butApplyFilter = Button(self.zoneButtons, text="Apply Filter", justify="center", command=self.applyFilter)
+        #zone radio
+        
+        self.radioFilter = Frame(self.zoneButtons)
+        self.rPixel = Radiobutton(self.radioFilter, text="Pixelization", variable=self.filtrageValue, value="pixel", command=self.radioButtonChanged)
+        self.rGauss = Radiobutton(self.radioFilter, text="Gaussian Blur", variable=self.filtrageValue, value="gauss", command=self.radioButtonChanged)
+        self.rPNoise = Radiobutton(self.radioFilter, text="Partial Destructive Noise", variable=self.filtrageValue, value="partnoise", command=self.radioButtonChanged)
+        self.rBitNoise = Radiobutton(self.radioFilter, text="Full Bit Noise", variable=self.filtrageValue, value="bitnoise", command=self.radioButtonChanged)
+
+        butApplyFilter = Button(self.radioFilter, text="Apply Filter", justify="center", command=self.applyFilter)
 
         #Liste Selections
-        self.listSelectionTk = Listbox(self.zoneButtons)
-        
+        self.listWidget = Frame(self.zoneButtons)
+
+        self.listSelectionTk = Listbox(self.listWidget)
         self.listSelectionTk.bind('<<ListboxSelect>>', self.listChangeSelected)
-        butDelete = Button(self.zoneButtons, text="Delete Selection", justify="center", command=self.deleteSelection)
+        butDelete = Button(self.listWidget, text="Delete Selection", justify="center", command=self.deleteSelection)
 
         #Buttons CNN
         self.zoneCNN = Frame(self.zoneButtons)
@@ -98,15 +110,19 @@ class Interface:
         self.zoneButtons.pack(expand=False, side=RIGHT, fill=Y)
         self.zoneButtons.pack_propagate(0)
         #zoneButtons
+        self.butOpenFrame.pack(side=TOP, fill=BOTH, expand=True)
         butOpen.pack(side=TOP, fill=X)
+
+        self.listWidget.pack(side=TOP, fill=BOTH, expand=True)
+        self.listSelectionTk.pack(side=TOP, fill=X)
+        butDelete.pack(side=TOP, fill=X)
+
+        self.radioFilter.pack(side=TOP, fill=BOTH, expand=True)
         self.rPixel.pack(side=TOP, fill=X)
         self.rGauss.pack(side=TOP, fill=X)
         self.rPNoise.pack(side=TOP, fill=X)
         self.rBitNoise.pack(side=TOP, fill=X)
         butApplyFilter.pack(side=TOP, fill=X)
-
-        self.listSelectionTk.pack(side=TOP, fill=X)
-        butDelete.pack(side=TOP, fill=X)
 
         self.zoneCNN.pack(side=BOTTOM, fill=X)
         #zone CNN
@@ -117,8 +133,8 @@ class Interface:
         f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
         filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./")
         if filename is not None:
-            self.img = PhotoImage(file =filename.name)
-            self.display = self.img.copy()
+            self.img = Image.open(filename.name)
+            self.display = ImageTk.PhotoImage(self.img)
             self.zoom = 0
 
             self.labelZoom.config(text = f"Zoom = x{self.zoomDisplayNumber()}")
@@ -140,19 +156,24 @@ class Interface:
         return round(result,2)
 
     def canvasZoom(self, event):
+        if event.delta > 0.1 and ((self.zoom + self.zoomPas) < self.zoomMax):
+            self.zoom = self.zoom + self.zoomPas
+        elif event.delta < -0.1 and ((self.zoom - self.zoomPas) > self.zoomMin):
+            self.zoom = self.zoom-self.zoomPas
+        data = self.generateImageAllFilter()
+        self.applyZoom(data)
+            
+
+
+    def applyZoom(self, img):
         if hasattr(self, 'canImg'):
-            if event.delta > 0.1 and ((self.zoom + self.zoomPas) < self.zoomMax):
-                self.zoom = self.zoom + self.zoomPas
-            elif event.delta < -0.1 and ((self.zoom - self.zoomPas) > self.zoomMin):
-                self.zoom = self.zoom-self.zoomPas
-            
             if(self.zoom > 0):
-                self.display = self.img.zoom(1 + self.zoom)
+                self.display = img._PhotoImage__photo.zoom(1 + self.zoom)
             elif self.zoom < 0:
-                self.display = self.img.subsample( 1 - self.zoom)
-            else :
-                self.display = self.img.copy()
-            
+                self.display = img._PhotoImage__photo.subsample( 1 - self.zoom)
+            else:
+                self.display = img
+
             self.labelZoom.config(text = f"Zoom = x{self.zoomDisplayNumber()}")
             self.canvas.itemconfig(self.canImg, image = self.display)
             self.updateAllSelectionsZoom()
@@ -216,7 +237,7 @@ class Interface:
                 sel = self.computeImageSelection(min, max)
                 if sel is not None :
                     self.selections.append(sel)
-                    self.listSelectionTk.insert(0, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
             self.canvas.delete(self.selectHelper)
 
     def computeImageSelection(self, min, max):
@@ -236,8 +257,8 @@ class Interface:
             if max[i] > maxSelCan[i]:
                 max[i] = maxSelCan[i]
 
-        wRatio =  self.display.width() / self.img.width()
-        hRatio =  self.display.width() / self.img.width()
+        wRatio =  self.display.width() / self.img.size[0]
+        hRatio =  self.display.height() / self.img.size[1]
 
         imgSelMin = [0,0]
         imgSelMax = [0,0]
@@ -276,8 +297,8 @@ class Interface:
         h2 = self.display.height()/2
         minSelCan = (coords[0] - w2 , coords[1] - h2)
 
-        wRatio =  self.display.width() / self.img.width()
-        hRatio =  self.display.width() / self.img.width()
+        wRatio =  self.display.width() / self.img.size[0]
+        hRatio =  self.display.width() / self.img.size[1]
 
         for e in self.selections:   
             self.updateSelectionZoom(e, minSelCan, wRatio, hRatio)
@@ -286,14 +307,22 @@ class Interface:
         print(self.filtrageValue.get())
 
     def applyFilter(self):
-        print("Apply")
+        if len(self.listSelectionTk.curselection()) > 0 :
+            index = int(self.listSelectionTk.curselection()[0])
+            sel = self.selections[index]
+            self.setFilter(index, self.filtrageValue.get(), [])
+            self.listSelectionTk.delete(index)
+            self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+            data = self.generateImageAllFilter()
+            self.applyZoom(data)
+            
 
     def askCNN(self):
         print("CNN")
     
     def listChangeSelected(self, event):
-        if self.listSelectionTk.size() > 0 :
-            index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
+        if len(self.listSelectionTk.curselection()) > 0 :
+            index = int(self.listSelectionTk.curselection()[0])
             for i in range(len(self.selections)):
                 if i == index:
                     self.canvas.itemconfig(self.selections[i].element, outline="#ff0")
@@ -301,8 +330,37 @@ class Interface:
                     self.canvas.itemconfig(self.selections[i].element, outline="#0f0")
 
     def deleteSelection(self):
-        if self.listSelectionTk.size() > 0 :
-            index = int(self.listSelectionTk.size() - self.listSelectionTk.curselection()[0] -1)
+        if len(self.listSelectionTk.curselection()) > 0 :
+            index = int(self.listSelectionTk.curselection()[0])
+
             self.listSelectionTk.delete(index)
             self.canvas.delete(self.selections[index].element)
             self.selections.remove(self.selections[index])
+
+    def setFilter(self, id, filter, parameters):
+        if id >= 0:
+            self.selections[id].setFilter(filter, parameters)
+    
+    def displayFilter(self, id, img):
+        if id >= 0:
+            
+            e = self.selections[id]
+            print(e.filter)
+            if e.filter == "pixel":
+                return filter.imgPixelate(img, 4, e.min, e.max)
+            elif e.filter == "gauss":
+                return filter.imgBlurring(img, 2, e.min, e.max)
+            elif e.filter == "partnoise":
+                return filter.imgRandomNoise(img, 0.5, True, e.min, e.max)
+            elif e.filter == "bitnoise":
+                return filter.imgFullNoise(img, 2, True, 2,  e.min, e.max)
+    
+    def generateImageAllFilter(self):
+        if(self.img is not None):
+            data = self.img.copy()
+            for id in range(len(self.selections)):
+                data = self.displayFilter(id, data)
+            res = ImageTk.PhotoImage(data)
+            return res
+        return None
+            
