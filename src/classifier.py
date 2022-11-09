@@ -1,9 +1,42 @@
-# keras imports for the dataset and building our neural network
-import matplotlib.pyplot as plt
-from keras.datasets import cifar10
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Conv2D, MaxPool2D, Flatten, Input
-from keras.utils import np_utils
+# import matplotlib.pyplot as plt
+# from keras.datasets import cifar10
+# from keras.models import Sequential, load_model
+# from keras.layers import Dense, Dropout, Conv2D, MaxPool2D, Flatten, Input
+
+import numpy as np
+import tensorflow as tf 
+from keras.utils import np_utils, load_img, img_to_array
+from keras.applications import EfficientNetV2L as Construct
+from keras.applications import efficientnet_v2 as Architecture
+
+def load_imagenet_model():
+  global imagenet_model
+  imagenet_model = Construct(
+    weights="imagenet",
+    classes=1000
+  )
+
+def predict_imagenet(path_img):
+  global imagenet_model
+  #img = tf.expand_dims(img_to_array(load_img(path_img)))
+  img = tf.expand_dims(img_to_array(load_img(path_img, target_size=(480,480))),0)
+  #img = Architecture.preprocess_input(img)
+  predictions = imagenet_model.predict(img)
+  print('Shape: {}'.format(predictions.shape))
+  for name, desc, score in Architecture.decode_predictions(predictions)[0]:
+    print(f"-{desc} : {100*score}")
+  
+"""
+cifar10_label = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
+def predictModel(path_model, path_img):
+  model = load_model(path_model, compile = True)
+  img = tf.expand_dims(img_to_array(load_img(path_img, target_size=(32,32))),0)
+  predictions = model.predict(img)
+  res = predictions.argmax(axis=-1)
+  print(cifar10_label[res[0]])
+
+
 
 def classifier():
     # loading the dataset
@@ -98,17 +131,14 @@ def classifier():
     # reconstructed_model = keras.models.load_model("my_model")
 
     # Check
-    """
     np.testing.assert_allclose(
       model.predict(test_input), reconstructed_model.predict(test_input)
     )
-    """
 
     # The reconstructed model is already compiled and has retained the optimizer state, so training can resume:
     # reconstructed_model.fit(test_input, test_target)
 
 
-"""
 class estimator:
   _estimator_type = ''
   classes = []

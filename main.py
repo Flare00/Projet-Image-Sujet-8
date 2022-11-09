@@ -31,10 +31,13 @@ def main():
 
     # Classifier
     # classifier.classifier()
+    #classifier.predictModel('my_model', 'input/Cat03.jpg')
+    classifier.load_imagenet_model()
+    classifier.predict_imagenet('input/Beer_mug_transparent.png')
 
     # Interface
-    interface.initInterface()
-    interface.startInterface()
+    # interface.initInterface()
+    # interface.startInterface()
 
 if __name__== "__main__":
     main()
