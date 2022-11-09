@@ -4,6 +4,8 @@ import os
 
 import src.filter as filter
 import src.interface as interface
+import src.classifier as classifier
+
 outputFolder = "output/"
 
 def main():
@@ -27,9 +29,15 @@ def main():
     imgNoise.save(outputFolder+'test_full_noise.png', 'png')
     # imgNoiseBlur.save(outputFolder+'test_noise_blur.png', 'png')
 
+    # Classifier
+    # classifier.classifier()
+    #classifier.predictModel('my_model', 'input/Cat03.jpg')
+    classifier.load_imagenet_model()
+    classifier.predict_imagenet('input/Beer_mug_transparent.png')
+
     # Interface
-    interface.initInterface()
-    interface.startInterface()
+    # interface.initInterface()
+    # interface.startInterface()
 
 if __name__== "__main__":
     main()
