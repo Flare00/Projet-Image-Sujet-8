@@ -2,7 +2,7 @@
 import warnings
 import numpy as np
 from math import log10, sqrt
-import tensorflow as tf 
+from tensorflow.image import ssim
 
 # Check size and types
 def assert_sizeImages(original, modified):
@@ -46,7 +46,7 @@ def metric_PSNR(original, modified):
 # Structural Similarity Index Measure
 def metric_SSIM(original, modified, L=255):
     original, modified = assert_sizeImages(original,modified)
-    return tf.image.ssim(original, modified, L).numpy()
+    return ssim(original, modified, L).numpy()
 
 
 # Spectral Angle Mapper
