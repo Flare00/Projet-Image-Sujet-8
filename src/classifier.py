@@ -2,14 +2,16 @@
 # from keras.datasets import cifar10
 # from keras.models import Sequential, load_model
 # from keras.layers import Dense, Dropout, Conv2D, MaxPool2D, Flatten, Input
+# import numpy as np
 
 import logging, os
+
 logging.disable(logging.WARNING)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-import numpy as np
+
 import tensorflow as tf 
-from keras.utils import np_utils, load_img, img_to_array
+from keras.utils import load_img, img_to_array
 from keras.applications import EfficientNetV2L as Construct
 from keras.applications import efficientnet_v2 as Architecture
 

@@ -8,7 +8,7 @@ Florentin DENIS
 Khélian LARVET  
 (University of Montpellier : M2 IMAGINE, 2022-2023)
 
-## Languages and tools used
+## Dependencies
 - Python : v3.0
 ```console
 apt-get install python3
@@ -17,13 +17,13 @@ apt-get install python3
 ```console
 apt-get install python-tk
 ```
-- Matplotlib
-```console
-apt-get install python3-matplotlib
-```
 - Python Imaging Library (PIL) : v9.3.0
 ```console
 pip install pillow
+```
+- NumPy : v1.23.4
+```console
+pip install numpy
 ```
 - Keras : v2.10.0
 ```console
@@ -32,4 +32,10 @@ pip install keras
 - TensorFlow : v2.10.0
 ```console
 pip install tensorflow
+```
+
+## Others
+- Matplotlib
+```console
+apt-get install python3-matplotlib
 ```
