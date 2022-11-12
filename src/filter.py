@@ -77,3 +77,28 @@ def imgFullNoise(img, nbBit, msb : bool, mode, min, max): #mode = 0 : remplace p
             crop.putpixel((x,y), pix)
     res.paste(crop, min)
     return res
+
+def imgShuffle(img, min, max):
+    res = img.copy()
+    crop = cropImage(img, min, max)
+    cropRes = crop.copy()
+
+    w, h = crop.size
+    size = w*h
+    isEmpty = [True for i in range(size)]
+
+    for i in range(size):
+        x = i % w
+        y = i / h
+        pix = crop.getpixel((x,y))
+        pos = random.randint(0, size-1)
+
+        while isEmpty[pos] == False:
+            pos = pos + 1
+            pos = pos % size
+
+        cropRes.putpixel((int(pos % w), int(pos / h)), pix)
+        isEmpty[pos] = False
+
+    res.paste(cropRes, min)
+    return res

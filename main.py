@@ -12,14 +12,17 @@ outputFolder = "output/"
 def main():
     # Image input
     img = PIL.Image.open("input/ex.png")
-    
+    w,h = img.size
+
     # Filters
-    imgPixel = filter.imgPixelate(img, 4, (0, 0), img.size)
-    imgBlur = filter.imgBlurring(img, 2, (0, 0), img.size)
-    imgRandNoise = filter.imgRandomNoise(img, 0.5, True, (0, 0), img.size)
-    imgNoise = filter.imgFullNoise(img, 2, True, 2, (0, 0), img.size)
+    imgPixel = filter.imgPixelate(img, 4, (15, 15), (w-15, h-15))
+    imgBlur = filter.imgBlurring(img, 2, (15, 15), (w-15, h-15))
+    imgRandNoise = filter.imgRandomNoise(img, 0.5, True, (15, 15), (w-15, h-15))
+    imgNoise = filter.imgFullNoise(img, 2, True, 2, (15, 15), (w-15, h-15))
+    imgShuffle = filter.imgShuffle(img, (15, 15), (w-15, h-15))
 
     # Metrics
+    """
     print("--- MSE")
     print(metric.metric_MSE(img, img))
     print(metric.metric_MSE(img, imgPixel))
@@ -56,6 +59,7 @@ def main():
     print(metric.metric_HaarPSI(img, imgBlur))
     print(metric.metric_HaarPSI(img, imgRandNoise))
     print(metric.metric_HaarPSI(img, imgNoise))
+    """
 
     # Folder Save
     if not(os.path.exists(outputFolder)):
@@ -66,6 +70,7 @@ def main():
     imgBlur.save(outputFolder+'test_blur.png', 'png')
     imgRandNoise.save(outputFolder+'test_random_noise.png', 'png')
     imgNoise.save(outputFolder+'test_full_noise.png', 'png')
+    imgShuffle.save(outputFolder+'test_suffle.png', 'png')
 
     ### Classifier Creation
     # classifier.classifier()
