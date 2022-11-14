@@ -86,6 +86,7 @@ class Interface:
         self.rGauss = Radiobutton(self.radioFilter, text="Gaussian Blur", variable=self.filtrageValue, value="gauss", command=self.radioButtonChanged)
         self.rPNoise = Radiobutton(self.radioFilter, text="Partial Destructive Noise", variable=self.filtrageValue, value="partnoise", command=self.radioButtonChanged)
         self.rBitNoise = Radiobutton(self.radioFilter, text="Full Bit Noise", variable=self.filtrageValue, value="bitnoise", command=self.radioButtonChanged)
+        self.rShuffle = Radiobutton(self.radioFilter, text="Shuffle", variable=self.filtrageValue, value="shuffle", command=self.radioButtonChanged)
 
         butApplyFilter = Button(self.radioFilter, text="Apply Filter", justify="center", command=self.applyFilter)
 
@@ -127,6 +128,7 @@ class Interface:
         self.rGauss.pack(side=TOP, fill=X)
         self.rPNoise.pack(side=TOP, fill=X)
         self.rBitNoise.pack(side=TOP, fill=X)
+        self.rShuffle.pack(side=TOP, fill=X)
         butApplyFilter.pack(side=TOP, fill=X)
 
         self.zoneCNN.pack(side=BOTTOM, fill=X)
@@ -327,7 +329,6 @@ class Interface:
         cursel = self.listSelectionTk.curselection()
         for i in range(len(cursel)):
             index = int(cursel[i])
-            print(index)
             sel = self.selections[index]
             self.setFilter(index, self.filtrageValue.get(), [])
             self.listSelectionTk.delete(index)
@@ -411,6 +412,8 @@ class Interface:
                 return filter.imgRandomNoise(img, 0.5, True, e.min, e.max)
             elif e.filter == "bitnoise":
                 return filter.imgFullNoise(img, 2, True, 2,  e.min, e.max)
+            elif e.filter == "shuffle":
+                return filter.imgShuffle(img, e.min, e.max)
             else :
                 return img 
     def computeImage(self):

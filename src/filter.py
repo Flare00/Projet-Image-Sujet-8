@@ -2,7 +2,7 @@
 from PIL import Image, ImageFilter
 import random
 
-seed = random.randint(1,16000)
+seed = random.randint(1,1000000000000000)
 
 
 # min et max sont des tuples (x,y)
@@ -87,15 +87,16 @@ def imgShuffle(img, min, max):
     random.seed(seed)
     res = img.copy()
     crop = cropImage(img, min, max)
-    cropRes = crop.copy()
 
+
+    cropRes = crop.copy()
     w, h = crop.size
     size = w*h
     isEmpty = [True for i in range(size)]
 
     for i in range(size):
         x = i % w
-        y = i / h
+        y = int(i / w)
         pix = crop.getpixel((x,y))
         pos = random.randint(0, size-1)
 
@@ -103,7 +104,7 @@ def imgShuffle(img, min, max):
             pos = pos + 1
             pos = pos % size
 
-        cropRes.putpixel((int(pos % w), int(pos / h)), pix)
+        cropRes.putpixel((int(pos % w), int(pos / w)), pix)
         isEmpty[pos] = False
 
     res.paste(cropRes, min)
