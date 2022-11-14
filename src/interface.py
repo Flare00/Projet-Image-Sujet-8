@@ -91,8 +91,9 @@ class Interface:
 
         #Liste Selections
         self.listWidget = Frame(self.zoneButtons)
-
-        self.listSelectionTk = Listbox(self.listWidget)
+        butListUp = Button(self.listWidget, text="▲", justify="center", command=self.listMoveUp)
+        butListDown = Button(self.listWidget, text="▼", justify="center", command=self.listMoveDown)
+        self.listSelectionTk = Listbox(self.listWidget, selectmode = "multiple")
         self.listSelectionTk.bind('<<ListboxSelect>>', self.listChangeSelected)
         butDelete = Button(self.listWidget, text="Delete Selection", justify="center", command=self.deleteSelection)
 
@@ -102,8 +103,6 @@ class Interface:
         butEvaluation= Button(self.zoneCNN, text="Evaluation", justify="center", command=self.askCNN)
 
 #----
-
-
         #elements Placement
         labelHelper.pack( fill=X, side=TOP)
         self.labelMetrics.pack( fill=X, side=BOTTOM)
@@ -118,6 +117,8 @@ class Interface:
         butSave.pack(side=TOP, fill=X)
 
         self.listWidget.pack(side=TOP, fill=BOTH, expand=True)
+        butListUp.pack(side=TOP, fill=X)
+        butListDown.pack(side=TOP, fill=X)
         self.listSelectionTk.pack(side=TOP, fill=X)
         butDelete.pack(side=TOP, fill=X)
 
@@ -173,8 +174,7 @@ class Interface:
                 self.zoom = self.zoom + self.zoomPas
             elif event.num == 5 and ((self.zoom - self.zoomPas) > self.zoomMin):
                 self.zoom = self.zoom-self.zoomPas
-            data = self.generateImageAllFilter()
-            self.applyZoom(data)
+            self.computeImage()
             
 
 
@@ -251,6 +251,9 @@ class Interface:
                 if sel is not None :
                     self.selections.append(sel)
                     self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                    self.listSelectionTk.selection_clear(0, END)
+                    self.listSelectionTk.selection_set(END)
+                    self.listChangeSelected(None)
             if hasattr(self, 'selectHelper'):
                 self.canvas.delete(self.selectHelper)
 
@@ -321,37 +324,77 @@ class Interface:
         a = 1
 
     def applyFilter(self):
-        if len(self.listSelectionTk.curselection()) > 0 :
-            index = int(self.listSelectionTk.curselection()[0])
+        cursel = self.listSelectionTk.curselection()
+        for i in range(len(cursel)):
+            index = int(cursel[i])
+            print(index)
             sel = self.selections[index]
             self.setFilter(index, self.filtrageValue.get(), [])
             self.listSelectionTk.delete(index)
             self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
-            data = self.generateImageAllFilter()
-            self.applyZoom(data)
+
+            self.computeImage()
+        self.listSelectionTk.selection_clear(0, END)
             
 
     def askCNN(self):
         print("CNN")
     
+    def listMoveUp(self):
+        cursel = self.listSelectionTk.curselection()
+        for i in range(len(cursel)):
+            index = int(cursel[i])
+            if index > 0:
+                self.swapListElem(index, index - 1)
+                self.computeImage()
+
+    def listMoveDown(self):
+        cursel = self.listSelectionTk.curselection()
+        for i in range(len(cursel)-1, -1, -1 ):
+            
+            index = int(cursel[i])
+            if index < self.listSelectionTk.size() - 1:
+                self.swapListElem(index, index + 1)
+                self.computeImage()
+
+
+    def swapListElem(self, index1, index2):
+        buf = self.selections[index2]
+        self.selections[index2] = self.selections[index1]
+        self.selections[index1] = buf
+
+        txt = self.listSelectionTk.get(index1)
+        self.listSelectionTk.delete(index1)
+        self.listSelectionTk.insert(index2, txt)
+
+        self.listSelectionTk.selection_set(index2)
+
     def listChangeSelected(self, event):
-        if len(self.listSelectionTk.curselection()) > 0 :
-            index = int(self.listSelectionTk.curselection()[0])
+        cursel = self.listSelectionTk.curselection()
+        if len(cursel) > 0:
             for i in range(len(self.selections)):
-                if i == index:
-                    self.canvas.itemconfig(self.selections[i].element, outline="#ff0")
-                else :
-                    self.canvas.itemconfig(self.selections[i].element, outline="#0f0")
+                found = False
+                for j in range(len(cursel)):
+                    if not found :
+                        index = int(cursel[j])
+                        if i == index:
+                            found = True
+                            self.canvas.itemconfig(self.selections[i].element, outline="#ff0")
+                        else :
+                            self.canvas.itemconfig(self.selections[i].element, outline="#0f0")
 
     def deleteSelection(self):
-        if len(self.listSelectionTk.curselection()) > 0 :
-            index = int(self.listSelectionTk.curselection()[0])
-
+        cursel = self.listSelectionTk.curselection()
+        for i in range(len(cursel)):
+            index = int(cursel[i])
+            
             self.listSelectionTk.delete(index)
             self.canvas.delete(self.selections[index].element)
             self.selections.remove(self.selections[index])
-            data = self.generateImageAllFilter()
-            self.applyZoom(data)
+            if(self.listSelectionTk.size() > 0):
+                if(index > self.listSelectionTk.size()-1): index = self.listSelectionTk.size()-1
+                self.listSelectionTk.selection_set(index)
+            self.computeImage()
 
     def setFilter(self, id, filter, parameters):
         if id >= 0:
@@ -370,7 +413,11 @@ class Interface:
                 return filter.imgFullNoise(img, 2, True, 2,  e.min, e.max)
             else :
                 return img 
+    def computeImage(self):
+        data = self.generateImageAllFilter()
+        self.applyZoom(data)
     
+
     def generateImageAllFilter(self):
         if(self.img is not None):
             data = self.img.copy()
