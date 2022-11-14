@@ -100,8 +100,8 @@ class Interface:
 
         #Buttons CNN
         self.zoneCNN = Frame(self.zoneButtons)
-        butDetection= Button(self.zoneCNN, text="Detection", justify="center", command=self.askCNN)
-        butEvaluation= Button(self.zoneCNN, text="Evaluation", justify="center", command=self.askCNN)
+        butDetection= Button(self.zoneCNN, text="Detection", justify="center", command=self.askDetectionCNN)
+        butEvaluation= Button(self.zoneCNN, text="Evaluation", justify="center", command=self.askEvalCNN)
 
 #----
         #elements Placement
@@ -338,8 +338,7 @@ class Interface:
         self.listSelectionTk.selection_clear(0, END)
             
 
-    def askCNN(self):
-        print("CNN")
+
     
     def listMoveUp(self):
         cursel = self.listSelectionTk.curselection()
@@ -442,3 +441,12 @@ class Interface:
         haar = metric.metric_HaarPSI(self.img, self.editedImg)
 
         self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | MSE : {mse:.2f} | RMSE : {rmse:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
+
+    def askDetectionCNN(self):
+        print("D CNN")
+        if hasattr(self, 'editedImg'):
+            print("Can Execute")
+    def askEvalCNN(self):
+        print("E CNN")
+        if hasattr(self, 'editedImg'):
+            print("Can Execute")
