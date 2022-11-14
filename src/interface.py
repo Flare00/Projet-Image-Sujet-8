@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-from tkinter.filedialog import FileDialog
-
 from tkinter import *
 from tkinter import filedialog
-from tkinter.filedialog import askopenfile
 from PIL import ImageTk, Image
+
+import src.metric as metric
 
 import src.filter as filter
 
@@ -44,21 +43,23 @@ class Interface:
         self.root.title('Safe-Eye')
         self.selfirstPos = (0,0)
         self.selections = []
-        width = 800
-        height = 600
+        width = 1000
+        height = 800
         screenWidth = self.root.winfo_screenwidth()
         screenHeight= self.root.winfo_screenheight()
         alignstr = '%dx%d+%d+%d' % (width, height, (screenWidth - width) / 2, (screenHeight - height) / 2)
         self.root.geometry(alignstr)
-        self.root.resizable(width=False, height=False)
+        self.root.resizable(width=True, height=True)
 
         #Create Elements
         labelHelper = Label(text="Left Click Drag : Create a selection | Scroll : Zoom | Right Click Drag : Pan")
         self.labelZoom = Label(text="Zoom = x1")
+        self.labelMetrics= Label(text="Metrics")
        
 
         self.canvas = Canvas(self.root, bg='blue')
-        self.canvas.bind_all("<MouseWheel>", self.canvasZoom)
+        self.canvas.bind_all("<Button-4>", self.canvasZoom)
+        self.canvas.bind_all("<Button-5>", self.canvasZoom)
 
         self.canvas.bind_all("<B3-Motion>", self.canvasPan)
         self.canvas.bind_all("<Button-3>", self.canvasPanStart)
@@ -73,6 +74,7 @@ class Interface:
         
         self.butOpenFrame = Frame(self.zoneButtons)
         butOpen = Button(self.butOpenFrame, text="Open Image", justify="center", command=self.openImage)
+        butSave = Button(self.butOpenFrame, text="Save Image", justify="center", command=self.saveImage)
         #selections Filtres
         self.filtrageValue = StringVar()
         self.filtrageValue.set("pixel")
@@ -104,6 +106,7 @@ class Interface:
 
         #elements Placement
         labelHelper.pack( fill=X, side=TOP)
+        self.labelMetrics.pack( fill=X, side=BOTTOM)
         self.labelZoom.pack( fill=X, side=BOTTOM)
         self.canvas.pack( expand=True,fill=BOTH, side=LEFT)
 
@@ -112,6 +115,7 @@ class Interface:
         #zoneButtons
         self.butOpenFrame.pack(side=TOP, fill=BOTH, expand=True)
         butOpen.pack(side=TOP, fill=X)
+        butSave.pack(side=TOP, fill=X)
 
         self.listWidget.pack(side=TOP, fill=BOTH, expand=True)
         self.listSelectionTk.pack(side=TOP, fill=X)
@@ -134,6 +138,8 @@ class Interface:
         filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./")
         if filename is not None:
             self.img = Image.open(filename.name)
+            self.editedImg = self.img
+            self.computeMetrics()
             self.display = ImageTk.PhotoImage(self.img)
             self.zoom = 0
 
@@ -146,6 +152,12 @@ class Interface:
                 self.selections.clear()
             else :
                 self.canImg = self.canvas.create_image(self.canvas.winfo_width()/2,self.canvas.winfo_height()/2.0, anchor=CENTER, image = self.display)
+    def saveImage(self):
+        if hasattr(self, 'editedImg'):
+            f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
+            filename = filedialog.asksaveasfile(filetypes=f_types, initialdir = "./")
+            if filename is not None:
+                self.editedImg.save(filename.name)
 
     def zoomDisplayNumber(self):
         result = 1
@@ -156,12 +168,13 @@ class Interface:
         return round(result,2)
 
     def canvasZoom(self, event):
-        if event.delta > 0.1 and ((self.zoom + self.zoomPas) < self.zoomMax):
-            self.zoom = self.zoom + self.zoomPas
-        elif event.delta < -0.1 and ((self.zoom - self.zoomPas) > self.zoomMin):
-            self.zoom = self.zoom-self.zoomPas
-        data = self.generateImageAllFilter()
-        self.applyZoom(data)
+        if hasattr(self, 'img'):
+            if event.num == 4 and ((self.zoom + self.zoomPas) < self.zoomMax):
+                self.zoom = self.zoom + self.zoomPas
+            elif event.num == 5 and ((self.zoom - self.zoomPas) > self.zoomMin):
+                self.zoom = self.zoom-self.zoomPas
+            data = self.generateImageAllFilter()
+            self.applyZoom(data)
             
 
 
@@ -238,7 +251,8 @@ class Interface:
                 if sel is not None :
                     self.selections.append(sel)
                     self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
-            self.canvas.delete(self.selectHelper)
+            if hasattr(self, 'selectHelper'):
+                self.canvas.delete(self.selectHelper)
 
     def computeImageSelection(self, min, max):
         coords = self.canvas.coords(self.canImg)
@@ -298,13 +312,13 @@ class Interface:
         minSelCan = (coords[0] - w2 , coords[1] - h2)
 
         wRatio =  self.display.width() / self.img.size[0]
-        hRatio =  self.display.width() / self.img.size[1]
+        hRatio =  self.display.height() / self.img.size[1]
 
         for e in self.selections:   
             self.updateSelectionZoom(e, minSelCan, wRatio, hRatio)
 
     def radioButtonChanged(self):
-        print(self.filtrageValue.get())
+        a = 1
 
     def applyFilter(self):
         if len(self.listSelectionTk.curselection()) > 0 :
@@ -336,6 +350,8 @@ class Interface:
             self.listSelectionTk.delete(index)
             self.canvas.delete(self.selections[index].element)
             self.selections.remove(self.selections[index])
+            data = self.generateImageAllFilter()
+            self.applyZoom(data)
 
     def setFilter(self, id, filter, parameters):
         if id >= 0:
@@ -343,9 +359,7 @@ class Interface:
     
     def displayFilter(self, id, img):
         if id >= 0:
-            
             e = self.selections[id]
-            print(e.filter)
             if e.filter == "pixel":
                 return filter.imgPixelate(img, 4, e.min, e.max)
             elif e.filter == "gauss":
@@ -354,13 +368,27 @@ class Interface:
                 return filter.imgRandomNoise(img, 0.5, True, e.min, e.max)
             elif e.filter == "bitnoise":
                 return filter.imgFullNoise(img, 2, True, 2,  e.min, e.max)
+            else :
+                return img 
     
     def generateImageAllFilter(self):
         if(self.img is not None):
             data = self.img.copy()
             for id in range(len(self.selections)):
                 data = self.displayFilter(id, data)
+            if self.editedImg != data : 
+                self.editedImg = data
+                self.computeMetrics()
             res = ImageTk.PhotoImage(data)
             return res
         return None
-            
+
+    def computeMetrics(self):
+        psnr = metric.metric_PSNR(self.img, self.editedImg)
+        mse = metric.metric_MSE(self.img, self.editedImg)
+        rmse = metric.metric_RMSE(self.img, self.editedImg)
+        sam = metric.metric_SAM(self.img, self.editedImg)
+        ssim = metric.metric_SSIM(self.img, self.editedImg)
+        haar = metric.metric_HaarPSI(self.img, self.editedImg)
+
+        self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | MSE : {mse:.2f} | RMSE : {rmse:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")

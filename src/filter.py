@@ -2,6 +2,9 @@
 from PIL import Image, ImageFilter
 import random
 
+seed = random.randint(1,16000)
+
+
 # min et max sont des tuples (x,y)
 def cropImage(img, min, max):
     width, height = img.size
@@ -29,6 +32,7 @@ def imgBlurring(img, n, min, max):
     return res
 
 def imgRandomNoise(img, chance, randomPix: bool, min, max): #Replace random pixel by black
+    random.seed(seed)
     res = img.copy()
     crop = cropImage(img, min, max)
     for x in range(crop.width):
@@ -49,6 +53,7 @@ def imgRandomNoise(img, chance, randomPix: bool, min, max): #Replace random pixe
 
 #replace some bits of all pixel, according to the mode, if its msb and number of bits
 def imgFullNoise(img, nbBit, msb : bool, mode, min, max): #mode = 0 : remplace par des 0, 1 : remplace par des 1, 2 : random
+    random.seed(seed)
     res = img.copy()
     crop = cropImage(img, min, max)
     for x in range(crop.width):
@@ -79,6 +84,7 @@ def imgFullNoise(img, nbBit, msb : bool, mode, min, max): #mode = 0 : remplace p
     return res
 
 def imgShuffle(img, min, max):
+    random.seed(seed)
     res = img.copy()
     crop = cropImage(img, min, max)
     cropRes = crop.copy()

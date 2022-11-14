@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
 import PIL.Image
 import os
-
 import src.filter as filter
 import src.interface as interface
-import src.classifier as classifier
-import src.metric as metric
+#import src.classifier as classifier
+#import src.metric as metric
 
 outputFolder = "output/"
 
 def main():
+
     # Image input
+    """
     img = PIL.Image.open("input/ex.png")
     w,h = img.size
-
+	"""
     # Filters
+    """
     imgPixel = filter.imgPixelate(img, 4, (15, 15), (w-15, h-15))
     imgBlur = filter.imgBlurring(img, 2, (15, 15), (w-15, h-15))
     imgRandNoise = filter.imgRandomNoise(img, 0.5, True, (15, 15), (w-15, h-15))
     imgNoise = filter.imgFullNoise(img, 2, True, 2, (15, 15), (w-15, h-15))
     imgShuffle = filter.imgShuffle(img, (15, 15), (w-15, h-15))
-
+	"""
     # Metrics
     """
     print("--- MSE")
@@ -62,6 +64,7 @@ def main():
     """
 
     # Folder Save
+    """
     if not(os.path.exists(outputFolder)):
         os.makedirs(outputFolder)
     
@@ -71,7 +74,7 @@ def main():
     imgRandNoise.save(outputFolder+'test_random_noise.png', 'png')
     imgNoise.save(outputFolder+'test_full_noise.png', 'png')
     imgShuffle.save(outputFolder+'test_suffle.png', 'png')
-
+	"""
     ### Classifier Creation
     # classifier.classifier()
     # classifier.predictModel('my_model', 'input/Cat03.jpg')
@@ -81,8 +84,8 @@ def main():
     # classifier.predict_imagenet('input/Beer_mug_transparent.png')
 
     ### Interface
-    # interface.initInterface()
-    # interface.startInterface()
+    interface.initInterface()
+    interface.startInterface()
 
 if __name__== "__main__":
     main()
