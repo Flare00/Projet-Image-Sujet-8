@@ -10,32 +10,16 @@ Khélian LARVET
 
 ## Dependencies
 - Python : v3.0
-```console
-apt-get install python3
-```
 - Tkinter (GUI toolkit) : v8.6
-```console
-apt-get install python-tk
-```
 - Python Imaging Library (PIL) : v9.3.0
-```console
-pip install pillow
-```
 - NumPy : v1.23.4
-```console
-pip install numpy
-```
 - Keras : v2.10.0
-```console
-pip install keras
-```
 - TensorFlow : v2.10.0
-```console
-pip install tensorflow
-```
 
-## Others
-- Matplotlib
 ```console
-apt-get install python3-matplotlib
+pip install tk
+pip install pillow  
+pip install numpy  
+pip install keras  
+pip install tensorflow  
 ```

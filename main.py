@@ -3,8 +3,10 @@ import PIL.Image
 import os
 import src.filter as filter
 import src.interface as interface
+import src.yoloDetection as yolo
 #import src.classifier as classifier
 #import src.metric as metric
+
 
 outputFolder = "output/"
 
@@ -82,6 +84,10 @@ def main():
     ### Classifier Model
     # classifier.load_imagenet_model()
     # classifier.predict_imagenet('input/Beer_mug_transparent.png')
+
+    ### Yolo Detection
+    yolo.create_save_yolov3Model()
+    yolo.make_prediction()
 
     ### Interface
     interface.initInterface()

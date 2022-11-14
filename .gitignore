@@ -1,2 +1,4 @@
 **/__pycache__
 **/output
+**/model
+src/yolo-coco/yolov3.weights
