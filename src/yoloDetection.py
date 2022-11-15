@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # based on https://github.com/experiencor/keras-yolo3
-
+import os
 import struct
 import numpy as np
 from numpy import expand_dims
@@ -17,8 +17,8 @@ from keras.models import load_model
 from keras.utils import load_img
 from keras.utils import img_to_array
 
-from matplotlib import pyplot
-from matplotlib.patches import Rectangle
+# from matplotlib import pyplot
+# from matplotlib.patches import Rectangle
 
 def convolution_block(inp, convs, skip=True):
 	x = inp
@@ -300,6 +300,7 @@ def get_boxes(boxes, labels, thresh):
 	return v_boxes, v_labels, v_scores
 
 # draw all results
+"""
 def draw_boxes(filename, v_boxes, v_labels, v_scores):
 	# load the image
 	data = pyplot.imread(filename)
@@ -323,20 +324,25 @@ def draw_boxes(filename, v_boxes, v_labels, v_scores):
 		pyplot.text(x1, y1, label, color='white')
 	# show the plot
 	pyplot.show()
+"""
+
+PATH_COCO = './src/yolo-coco/'
+PATH_MODEL = './model/'
 
 def create_save_yolov3Model():
 	# define the model
 	model = make_yolov3_model()
 	# load the model weights
-	weight_reader = WeightReader('./src/yolo-coco/yolov3.weights')
+	weight_reader = WeightReader(PATH_COCO + 'yolov3.weights')
 	# set the model weights into the model
 	weight_reader.load_weights(model)
 	# save the model to file
-	model.save('./model/model.h5')
+	model.save(PATH_MODEL + 'model.h5')
+	return model
 
 def make_prediction():
 	# load yolov3 model
-	model = load_model('./model/model.h5')
+	model = load_model(PATH_MODEL + 'model.h5')
 	# define the expected input shape for the model
 	input_w, input_h = 416, 416
 	# define our new photo
@@ -367,4 +373,110 @@ def make_prediction():
 	for i in range(len(v_boxes)):
 		print(v_labels[i], v_scores[i])
 	# draw what we found
-	draw_boxes(photo_filename, v_boxes, v_labels, v_scores)
+	# draw_boxes(photo_filename, v_boxes, v_labels, v_scores)
+
+
+
+
+class Model:
+	def __init__(self, pathModel):
+		if not(os.path.exists(pathModel)):
+			self.model = self.create_save_yolov3Model('./src/yolo-coco/yolov3.weights', pathModel)
+		else: 
+			self.model = load_model(pathModel)
+		
+		# Params
+		self.input_w = 416
+		self.input_h = 416
+
+	def make_yolov3_model(self):
+		input_image = Input(shape=(None, None, 3))
+		# Layer  0 => 4
+		x = convolution_block(input_image, [{'filter': 32, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 0},
+									{'filter': 64, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 1},
+									{'filter': 32, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 2},
+									{'filter': 64, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 3}])
+		# Layer  5 => 8
+		x = convolution_block(x, [{'filter': 128, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 5},
+							{'filter':  64, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 6},
+							{'filter': 128, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 7}])
+		# Layer  9 => 11
+		x = convolution_block(x, [{'filter':  64, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 9},
+							{'filter': 128, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 10}])
+		# Layer 12 => 15
+		x = convolution_block(x, [{'filter': 256, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 12},
+							{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 13},
+							{'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 14}])
+		# Layer 16 => 36
+		for i in range(7):
+			x = convolution_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 16+i*3},
+								{'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 17+i*3}])
+		skip_36 = x
+		# Layer 37 => 40
+		x = convolution_block(x, [{'filter': 512, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 37},
+							{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 38},
+							{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 39}])
+		# Layer 41 => 61
+		for i in range(7):
+			x = convolution_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 41+i*3},
+								{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 42+i*3}])
+		skip_61 = x
+		# Layer 62 => 65
+		x = convolution_block(x, [{'filter': 1024, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 62},
+							{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 63},
+							{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 64}])
+		# Layer 66 => 74
+		for i in range(3):
+			x = convolution_block(x, [{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 66+i*3},
+								{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 67+i*3}])
+		# Layer 75 => 79
+		x = convolution_block(x, [{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 75},
+							{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 76},
+							{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 77},
+							{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 78},
+							{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 79}], skip=False)
+		# Layer 80 => 82
+		yolo_82 = convolution_block(x, [{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 80},
+								{'filter':  255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 81}], skip=False)
+		# Layer 83 => 86
+		x = convolution_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 84}], skip=False)
+		x = UpSampling2D(2)(x)
+		x = concatenate([x, skip_61])
+		# Layer 87 => 91
+		x = convolution_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 87},
+							{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 88},
+							{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 89},
+							{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 90},
+							{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 91}], skip=False)
+		# Layer 92 => 94
+		yolo_94 = convolution_block(x, [{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 92},
+								{'filter': 255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 93}], skip=False)
+		# Layer 95 => 98
+		x = convolution_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True,   'layer_idx': 96}], skip=False)
+		x = UpSampling2D(2)(x)
+		x = concatenate([x, skip_36])
+		# Layer 99 => 106
+		yolo_106 = convolution_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 99},
+								{'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 100},
+								{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 101},
+								{'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 102},
+								{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 103},
+								{'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 104},
+								{'filter': 255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 105}], skip=False)
+		return Model(input_image, [yolo_82, yolo_94, yolo_106])
+
+	def create_save_yolov3Model(self, pathWeights, pathSave):
+		model = self.make_yolov3_model()
+		weight_reader = WeightReader(pathWeights)
+		weight_reader.load_weights(model)
+		model.save(pathSave)
+		return model	
+
+	def loadWeights(self, pathCoco):
+		weight_reader = WeightReader(pathCoco)
+		weight_reader.load_weights(self.model)
+
+	def saveModel(self, pathSave):
+		self.model.save(pathSave)
+	
+	def makePrediction()
