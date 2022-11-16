@@ -6,13 +6,14 @@ logging.disable(logging.WARNING)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 print("Loading TensorFlow...")
 
-import PIL.Image
+# import PIL.Image
 # import os
 # import src.filter as filter
 # import src.classifier as classifier
 # import src.metric as metric
+# import src.yoloDetection as yolo
 import src.interface as interface
-import src.yoloDetection as yolo
+
 
 def main():
 
@@ -57,13 +58,10 @@ def main():
 
     ### Yolo Detection
     """
-    yolo.create_save_yolov3Model()
-    yolo.make_prediction()
-    """
     img = PIL.Image.open("input/img2.jpg")
     m = yolo.Model_YOLO("./model/")
     m.makePrediction(img)
-    
+    """
 
     ### Interface
     # interface.initInterface()
