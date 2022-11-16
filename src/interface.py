@@ -241,7 +241,6 @@ class Interface:
 
     def selectionEnd(self, event):
         if(self.canSelect):
-            print("Wat")
             if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
                 min = [0,0]
                 max = [0,0]
@@ -461,9 +460,11 @@ class Interface:
             boxes = self.yolo.makePrediction(self.editedImg)[0] #Get the information [0] that is the selections boxes
             if hasattr(self, 'canImg'):
                 for i in range(len(boxes)):
-                    print()
+                    w, h = self.img.size
+                    min = (boxes[i].xmin if boxes[i].xmin > 0 else 0, boxes[i].ymin if boxes[i].ymin > 0 else 0)
+                    max = (boxes[i].xmax if boxes[i].xmax < w else w-1, boxes[i].ymax if boxes[i].ymax < h else h-1)
                     element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
-                    sel = Select((boxes[i].xmin, boxes[i].ymin), (boxes[i].xmax, boxes[i].ymax),element)
+                    sel = Select(min,max ,element)
                     self.selections.append(sel)
                     self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
                     self.listSelectionTk.selection_clear(0, END)
