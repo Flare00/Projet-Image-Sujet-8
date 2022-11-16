@@ -404,8 +404,8 @@ class Interface:
             if(self.listSelectionTk.size() > 0):
                 if(index > self.listSelectionTk.size()-1): index = self.listSelectionTk.size()-1
                 self.listSelectionTk.selection_set(index)
-            self.generateImageAllFilter()
-            self.computeImage()
+        self.generateImageAllFilter()
+        self.computeImage()
 
     def setFilter(self, id, filter, parameters):
         if id >= 0:
