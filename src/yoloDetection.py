@@ -4,6 +4,7 @@
 import os
 import struct
 import numpy as np
+import PIL.Image
 from numpy import expand_dims
 from keras.layers import Conv2D
 from keras.layers import Input
@@ -386,7 +387,6 @@ class Model_YOLO:
 			self.model = load_model(pathModel + 'model.h5')
 		self.width = 0
 		self.height = 0
-		self.img = None
 		self.labels = open(PATH_COCO_LABELS).read().strip().split("\n")
 
 	def make_yolov3_model(self):
@@ -472,29 +472,19 @@ class Model_YOLO:
 		weight_reader.load_weights(model)
 		model.save(pathSave + 'model.h5')
 		return model
-	
-	def loadImage(self, filename, shape):
-		# load the image to get its shape
-		image = load_img(filename)
-		width, height = image.size
-		# load the image with the required size
-		image = load_img(filename, target_size=shape)
-		# convert to numpy array
-		image = img_to_array(image)
-		# scale pixel values to [0, 1]
-		image = image.astype('float32')
-		image /= 255.0
-		# add a dimension so that we have one sample
-		image = expand_dims(image, 0)
-		return image, width, height
 
 	def makePrediction(self, threshold=0.6):
 
 		input_w, input_h = 768, 576
-		photo_filename = './input/img3.jpg'
+		imageTest = PIL.Image.open("input/img1.jpg")
+		self.width, self.height = imageTest.size
+		imageTest = imageTest.resize((input_w, input_h))
+		imageTest = img_to_array(imageTest)
+		imageTest = imageTest.astype('float32')
+		imageTest /= 255.0
+		imageTest = expand_dims(imageTest, 0)
 
-		self.img, self.width, self.height = self.loadImage(photo_filename, (input_w, input_h))
-		YOLO_predict = self.model.predict(self.img)
+		YOLO_predict = self.model.predict(imageTest)
 		print([a.shape for a in YOLO_predict])
 
 		anchors = [[116,90, 156,198, 373,326], [30,61, 62,45, 59,119], [10,13, 16,30, 33,23]]
