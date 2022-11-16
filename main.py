@@ -61,9 +61,8 @@ def main():
     yolo.make_prediction()
     """
     img = PIL.Image.open("input/img2.jpg")
-    w,h = img.size
     m = yolo.Model_YOLO("./model/")
-    m.makePrediction()
+    m.makePrediction(img)
     
 
     ### Interface
