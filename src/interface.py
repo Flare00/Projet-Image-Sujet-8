@@ -462,7 +462,7 @@ class Interface:
                 for i in range(len(boxes)):
                     w, h = self.img.size
                     min = (boxes[i].xmin if boxes[i].xmin > 0 else 0, boxes[i].ymin if boxes[i].ymin > 0 else 0)
-                    max = (boxes[i].xmax if boxes[i].xmax < w else w-1, boxes[i].ymax if boxes[i].ymax < h else h-1)
+                    max = (boxes[i].xmax if boxes[i].xmax < w else w, boxes[i].ymax if boxes[i].ymax < h else h)
                     element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
                     sel = Select(min,max ,element)
                     self.selections.append(sel)
