@@ -343,8 +343,8 @@ class Interface:
             self.setFilter(index, self.filtrageValue.get(), [])
             self.listSelectionTk.delete(index)
             self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
-            self.generateImageAllFilter()
-            self.computeImage()
+        self.generateImageAllFilter()
+        self.computeImage()
         self.listSelectionTk.selection_clear(0, END)
             
 
