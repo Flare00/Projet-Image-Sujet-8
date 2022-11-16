@@ -34,6 +34,7 @@ class Select:
 class Interface:
 
     def __init__(self):
+        self.canSelect = True
         self.zoomMax = 10
         self.zoomMin = -10
         self.zoomPas = 1
@@ -140,6 +141,7 @@ class Interface:
 
     def openImage(self):
         f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
+        self.canSelect = False
         filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./")
         if filename is not None:
             self.img = Image.open(filename.name)
@@ -157,6 +159,9 @@ class Interface:
                 self.selections.clear()
             else :
                 self.canImg = self.canvas.create_image(self.canvas.winfo_width()/2,self.canvas.winfo_height()/2.0, anchor=CENTER, image = self.display)
+        self.canSelect = True
+
+
     def saveImage(self):
         if hasattr(self, 'editedImg'):
             f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
@@ -223,43 +228,47 @@ class Interface:
                         self.canvas.move(sel.element, delta[0]*self.panSpeed, delta[1]*self.panSpeed)
 
     def selectionStart(self, event):
-        self.selfirstPos = (event.x, event.y)
+        if(self.canSelect):
+            self.selfirstPos = (event.x, event.y)
 
     def selectionMotion(self, event):
-        if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
-            if hasattr(self, 'selectHelper'):
-                self.canvas.delete(self.selectHelper)
+        if(self.canSelect):
+            if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
+                if hasattr(self, 'selectHelper'):
+                    self.canvas.delete(self.selectHelper)
 
-            self.selectHelper = self.canvas.create_rectangle(event.x, event.y, self.selfirstPos[0], self.selfirstPos[1], outline="#f00")
+                self.selectHelper = self.canvas.create_rectangle(event.x, event.y, self.selfirstPos[0], self.selfirstPos[1], outline="#f00")
 
     def selectionEnd(self, event):
-        if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
-            min = [0,0]
-            max = [0,0]
-            if(event.x < self.selfirstPos[0]):
-                min[0] = event.x
-                max[0] = self.selfirstPos[0]
-            else :
-                min[0] = self.selfirstPos[0]
-                max[0] = event.x
+        if(self.canSelect):
+            print("Wat")
+            if event.x != self.selfirstPos[0] and event.y != self.selfirstPos[1]:
+                min = [0,0]
+                max = [0,0]
+                if(event.x < self.selfirstPos[0]):
+                    min[0] = event.x
+                    max[0] = self.selfirstPos[0]
+                else :
+                    min[0] = self.selfirstPos[0]
+                    max[0] = event.x
 
-            if(event.y < self.selfirstPos[1]):
-                min[1] = event.y
-                max[1] = self.selfirstPos[1]
-            else :
-                min[1] = self.selfirstPos[1]
-                max[1] = event.y
+                if(event.y < self.selfirstPos[1]):
+                    min[1] = event.y
+                    max[1] = self.selfirstPos[1]
+                else :
+                    min[1] = self.selfirstPos[1]
+                    max[1] = event.y
 
-            if hasattr(self, 'canImg'):
-                sel = self.computeImageSelection(min, max)
-                if sel is not None :
-                    self.selections.append(sel)
-                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
-                    self.listSelectionTk.selection_clear(0, END)
-                    self.listSelectionTk.selection_set(END)
-                    self.listChangeSelected(None)
-            if hasattr(self, 'selectHelper'):
-                self.canvas.delete(self.selectHelper)
+                if hasattr(self, 'canImg'):
+                    sel = self.computeImageSelection(min, max)
+                    if sel is not None :
+                        self.selections.append(sel)
+                        self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                        self.listSelectionTk.selection_clear(0, END)
+                        self.listSelectionTk.selection_set(END)
+                        self.listChangeSelected(None)
+                if hasattr(self, 'selectHelper'):
+                    self.canvas.delete(self.selectHelper)
 
     def computeImageSelection(self, min, max):
         coords = self.canvas.coords(self.canImg)
