@@ -7,8 +7,10 @@ from PIL import ImageTk, Image
 import src.metric as metric
 
 import src.filter as filter
-
+import src.yoloDetection as Yolo
 outputFolder = "output/"
+tmpFileSave = "tmp.png"
+pathModel = "./model/"
 
 def initInterface():
     global app
@@ -333,7 +335,7 @@ class Interface:
             self.setFilter(index, self.filtrageValue.get(), [])
             self.listSelectionTk.delete(index)
             self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
-
+            self.generateImageAllFilter()
             self.computeImage()
         self.listSelectionTk.selection_clear(0, END)
             
@@ -394,6 +396,7 @@ class Interface:
             if(self.listSelectionTk.size() > 0):
                 if(index > self.listSelectionTk.size()-1): index = self.listSelectionTk.size()-1
                 self.listSelectionTk.selection_set(index)
+            self.generateImageAllFilter()
             self.computeImage()
 
     def setFilter(self, id, filter, parameters):
@@ -415,9 +418,9 @@ class Interface:
                 return filter.imgShuffle(img, e.min, e.max)
             else :
                 return img 
+
     def computeImage(self):
-        data = self.generateImageAllFilter()
-        self.applyZoom(data)
+        self.applyZoom(ImageTk.PhotoImage(self.editedImg))
     
 
     def generateImageAllFilter(self):
@@ -443,10 +446,22 @@ class Interface:
         self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | MSE : {mse:.2f} | RMSE : {rmse:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
 
     def askDetectionCNN(self):
-        print("D CNN")
         if hasattr(self, 'editedImg'):
-            print("Can Execute")
+            if not hasattr(self, 'yolo'):
+                self.yolo = Yolo.Model_YOLO(pathModel)
+            boxes = self.yolo.makePrediction(self.editedImg)[0] #Get the information [0] that is the selections boxes
+            if hasattr(self, 'canImg'):
+                for i in range(len(boxes)):
+                    print()
+                    element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
+                    sel = Select((boxes[i].xmin, boxes[i].ymin), (boxes[i].xmax, boxes[i].ymax),element)
+                    self.selections.append(sel)
+                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                    self.listSelectionTk.selection_clear(0, END)
+                    self.listChangeSelected(None)
+                self.updateAllSelectionsZoom()
+
+
     def askEvalCNN(self):
-        print("E CNN")
         if hasattr(self, 'editedImg'):
-            print("Can Execute")
+            print("Execute Evaluation CNN")

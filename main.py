@@ -4,7 +4,7 @@ import logging, os
 
 logging.disable(logging.WARNING)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-print("Loading TensorFlow...")
+print("[INFO] Loading TensorFlow...")
 
 # import PIL.Image
 # import os
@@ -13,7 +13,7 @@ print("Loading TensorFlow...")
 # import src.metric as metric
 # import src.yoloDetection as yolo
 import src.interface as interface
-
+print("[INFO] TensorFlow Loaded.")
 
 def main():
 
@@ -64,8 +64,8 @@ def main():
     """
 
     ### Interface
-    # interface.initInterface()
-    # interface.startInterface()
+    interface.initInterface()
+    interface.startInterface()
 
 if __name__== "__main__":
     main()
