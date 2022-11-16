@@ -4,8 +4,8 @@
 import os
 import struct
 import numpy as np
-import PIL.Image
 from numpy import expand_dims
+from keras.activations import sigmoid
 from keras.layers import Conv2D
 from keras.layers import Input
 from keras.layers import BatchNormalization
@@ -17,6 +17,9 @@ from keras.layers import add
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import img_to_array
+
+PATH_COCO_LABELS = './src/yolo-coco/coco.names'
+PATH_COCO_WEIGHTS = './src/yolo-coco/yolov3.weights'
 
 def convolution_block(inp, convs, skip=True):
 	x = inp
@@ -35,9 +38,6 @@ def convolution_block(inp, convs, skip=True):
 		if conv['bnorm']: x = BatchNormalization(epsilon=0.001, name='bnorm_' + str(conv['layer_idx']))(x)
 		if conv['leaky']: x = LeakyReLU(alpha=0.1, name='leaky_' + str(conv['layer_idx']))(x)
 	return add([skip_connection, x]) if skip else x
-
-def _sigmoid(x):
-	return 1. / (1. + np.exp(-x))
 
 class WeightReader:
 	def __init__(self, weight_file):
@@ -117,8 +117,8 @@ def decode_netout(netout, anchors, obj_thresh, net_h, net_w):
 	netout = netout.reshape((grid_h, grid_w, nb_box, -1))
 	nb_class = netout.shape[-1] - 5
 	boxes = []
-	netout[..., :2]  = _sigmoid(netout[..., :2])
-	netout[..., 4:]  = _sigmoid(netout[..., 4:])
+	netout[..., :2]  = sigmoid(netout[..., :2])
+	netout[..., 4:]  = sigmoid(netout[..., 4:])
 	netout[..., 5:]  = netout[..., 4][..., np.newaxis] * netout[..., 5:]
 	netout[..., 5:] *= netout[..., 5:] > obj_thresh
 
@@ -202,9 +202,6 @@ def get_boxes(boxes, labels, thresh):
 				v_scores.append(box.classes[i]*100)
 				# don't break, many labels may trigger for one box
 	return v_boxes, v_labels, v_scores
-
-PATH_COCO_LABELS = './src/yolo-coco/coco.names'
-PATH_COCO_WEIGHTS = './src/yolo-coco/yolov3.weights'
 
 class Model_YOLO:
 	def __init__(self, pathModel):
@@ -330,4 +327,3 @@ class Model_YOLO:
 		except:
 			print("INFO : YOLO found nothing")
 			return ([],[],[])
-			
