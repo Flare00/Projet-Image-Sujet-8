@@ -15,11 +15,13 @@ Khélian LARVET
 - NumPy : v1.23.4
 - Keras : v2.10.0
 - TensorFlow : v2.10.0
+- MTCNN architecture : v0.1.1
 
 ```console
 pip install tk
 pip install pillow  
 pip install numpy  
 pip install keras  
-pip install tensorflow  
+pip install tensorflow
+pip install mtcnn
 ```
