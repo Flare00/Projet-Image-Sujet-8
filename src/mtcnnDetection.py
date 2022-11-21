@@ -9,11 +9,10 @@ class Model_MTCNN:
     
     def makePrediction(self, imageTest, threshold=0.9):
         detections = self.detector.detect_faces(np.array(imageTest))
-
+        res = []
         if not detections:
             print("INFO : MTCNN found nothing")
         else:
-            res = []
             for d in detections:
                 arr = []
                 score = d["confidence"]
