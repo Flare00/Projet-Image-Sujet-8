@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from PIL import Image, ImageFilter
 import random
-
-seed = random.randint(1,1000000000000000)
+import numpy as np
+seedV = random.randint(1,2**32)
 
 
 # min et max sont des tuples (x,y)
@@ -32,7 +32,7 @@ def imgBlurring(img, n, min, max):
     return res
 
 def imgRandomNoise(img, chance, randomPix: bool, min, max): #Replace random pixel by black
-    random.seed(seed)
+    random.seed(seedV)
     res = img.copy()
     crop = cropImage(img, min, max)
     for x in range(crop.width):
@@ -53,7 +53,7 @@ def imgRandomNoise(img, chance, randomPix: bool, min, max): #Replace random pixe
 
 #replace some bits of all pixel, according to the mode, if its msb and number of bits
 def imgFullNoise(img, nbBit, msb : bool, mode, min, max): #mode = 0 : remplace par des 0, 1 : remplace par des 1, 2 : random
-    random.seed(seed)
+    random.seed(seedV)
     res = img.copy()
     crop = cropImage(img, min, max)
     for x in range(crop.width):
@@ -84,28 +84,19 @@ def imgFullNoise(img, nbBit, msb : bool, mode, min, max): #mode = 0 : remplace p
     return res
 
 def imgShuffle(img, min, max):
-    random.seed(seed)
+    np.random.seed(seed=seedV)
+
     res = img.copy()
+
     crop = cropImage(img, min, max)
-
-
-    cropRes = crop.copy()
     w, h = crop.size
     size = w*h
-    isEmpty = [True for i in range(size)]
+    cropData = crop.getdata()
+    bands = len(crop.getbands())
+    cropData = np.reshape(cropData, (size, bands))
+    np.random.shuffle(cropData)
+    cropData = np.reshape(cropData, (h,w, bands))
+    
+    res.paste(Image.fromarray(cropData.astype('uint8')), min)
 
-    for i in range(size):
-        x = i % w
-        y = int(i / w)
-        pix = crop.getpixel((x,y))
-        pos = random.randint(0, size-1)
-
-        while isEmpty[pos] == False:
-            pos = pos + 1
-            pos = pos % size
-
-        cropRes.putpixel((int(pos % w), int(pos / w)), pix)
-        isEmpty[pos] = False
-
-    res.paste(cropRes, min)
     return res
