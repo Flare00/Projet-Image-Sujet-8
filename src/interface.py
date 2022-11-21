@@ -31,8 +31,144 @@ class Select:
         self.filter = filter
         self.parameters = parameters
 
-class Interface:
+class ParametersInterface:
+    def __init__(self,parentWin, filterSelected, callback):
+        self.parentWin = parentWin
+        self.callback = callback
+        self.filter = filterSelected;
+        self.root = Toplevel(parentWin)
+        self.root.grab_set()
+        self.root.title(f"{self.filter}")
+        self.root.protocol("WM_DELETE_WINDOW", self.onClose )
+        width = 400
+        height = 300
+        screenWidth = self.root.winfo_screenwidth()
+        screenHeight= self.root.winfo_screenheight()
+        alignstr = '%dx%d+%d+%d' % (width, height, (screenWidth - width) / 2, (screenHeight - height) / 2)
+        self.root.geometry(alignstr)
+        self.root.resizable(width=False, height=False)
 
+        self.ZoneTop = Frame(self.root)
+        self.ZoneLabels = Frame(self.ZoneTop)
+        self.ZoneChamps = Frame(self.ZoneTop)
+        self.ZoneButton = Frame(self.root)
+
+        butCancel = Button(self.ZoneButton, text="Cancel", justify="center", command=self.cancel)
+        butValidate = Button(self.ZoneButton, text="Validate", justify="center", command=self.validate)
+
+        self.ZoneTop.pack(fill=BOTH, side=TOP, expand=True)
+        self.ZoneButton.pack( fill=X, side=BOTTOM)
+
+        butCancel.pack(fill=X, side=LEFT, expand=True)
+        butValidate.pack(fill=X, side=RIGHT, expand=True)
+
+        self.ZoneLabels.pack( fill=BOTH, side=LEFT,expand=True)
+        self.ZoneChamps.pack( fill=BOTH, side=RIGHT,expand=True)
+
+        self.isset = False
+
+        if self.filter == "pixel":
+            self.pixelValue = StringVar(value="4")
+            self.pixelLabel = Label(self.ZoneLabels, text="Pixel Size")
+            self.pixelChamp = Entry(self.ZoneChamps, textvariable=self.pixelValue)
+
+            self.pixelLabel.pack(fill=X, side=TOP)
+            self.pixelChamp.pack(fill=X, side=TOP)
+            self.isset = True
+            #return filter.imgPixelate(img, 4, e.min, e.max)
+        elif self.filter == "gauss":
+            self.gaussValue = StringVar(value="2")
+            self.gaussLabel = Label(self.ZoneLabels, text="Blur Size")
+            self.gaussChamp = Entry(self.ZoneChamps, textvariable=self.gaussValue)
+
+            self.gaussLabel.pack(fill=X, side=TOP)
+            self.gaussChamp.pack(fill=X, side=TOP)
+
+            self.isset = True
+            #return filter.imgBlurring(img, 2, e.min, e.max)
+        elif self.filter == "partnoise":
+            self.pnoiseChanceValue = StringVar(value="0.5")
+            self.pnoiseChanceLabel = Label(self.ZoneLabels, text="Chance [0.0 -> 1.0]")
+            self.pnoiseChanceChamp = Entry(self.ZoneChamps, textvariable=self.pnoiseChanceValue)
+
+            self.pnoiseColorValue = IntVar(value=1)
+            self.pnoiseColorLabel = Label(self.ZoneLabels, text="Colored")
+            self.pnoiseColorChamp = Checkbutton(self.ZoneChamps, variable=self.pnoiseColorValue,  onvalue = 1, offvalue= 0, )
+
+            self.pnoiseChanceLabel.pack(fill=X, side=TOP)
+            self.pnoiseChanceChamp.pack(fill=X, side=TOP)
+
+            self.pnoiseColorLabel.pack(fill=X, side=TOP)
+            self.pnoiseColorChamp.pack(fill=X, side=TOP)
+
+            self.isset = True
+            #return filter.imgRandomNoise(img, 0.5, True, e.min, e.max)
+        elif self.filter == "bitnoise":
+            self.bnoisNBbitValue = StringVar(value="1")
+            self.bnoiseNBbitLabel = Label(self.ZoneLabels, text="Nb bit [0 -> 8]")
+            self.bnoiseNBbitChamp = Entry(self.ZoneChamps, textvariable=self.bnoisNBbitValue)
+
+            self.bnoiseMSBValue = IntVar(value=1)
+            self.bnoiseMSBLabel = Label(self.ZoneLabels, text="MSB")
+            self.bnoiseMSBChamp = Checkbutton(self.ZoneChamps, variable=self.bnoiseMSBValue,  onvalue = 1, offvalue= 0)
+
+            self.bnoiseModeOptions = ["0", "1", "Random"]
+            self.bnoiseModeValue = StringVar(value=self.bnoiseModeOptions[0])
+            self.bnoiseModeLabel = Label(self.ZoneLabels, text="Replace by")
+            self.bnoiseModeChamp = OptionMenu(self.ZoneChamps, self.bnoiseModeValue, *self.bnoiseModeOptions )
+
+
+            self.bnoiseNBbitLabel.pack(fill=X, side=TOP)
+            self.bnoiseNBbitChamp.pack(fill=X, side=TOP)
+
+            self.bnoiseMSBLabel.pack(fill=X, side=TOP)
+            self.bnoiseMSBChamp.pack(fill=X, side=TOP)
+
+            self.bnoiseModeLabel.pack(fill=X, side=TOP)
+            self.bnoiseModeChamp.pack(fill=X, side=TOP)
+
+            self.isset = True
+
+
+        if self.isset :
+            self.root.mainloop()
+        else:
+            
+            self.callback([])
+            self.cancel()
+
+
+    def cancel(self):
+        self.onClose()
+
+    def onClose(self):
+        self.root.grab_release()
+        self.root.destroy()
+
+    def validate(self):
+        if self.filter == "pixel":
+            print(f"Pixel : {self.pixelValue.get()}")
+            self.callback([int(self.pixelValue.get())])
+        elif self.filter == "gauss":
+            print(f"Gauss : {self.gaussValue.get()}")
+            self.callback([int(self.gaussValue.get())])
+
+        elif self.filter == "partnoise":
+            print(f"Partnoise | Chance : {self.pnoiseChanceValue.get()} | Color : {self.pnoiseColorValue.get()}")
+            self.callback([float(self.pnoiseChanceValue.get()), int(self.pnoiseColorValue.get())])
+        elif self.filter == "bitnoise":
+            print(f"Bitnoise | NBbit : {self.bnoisNBbitValue.get()} | MSB : {self.bnoiseMSBValue.get()} | Mode : {self.bnoiseModeValue.get()}")
+            mode = 2
+            if self.bnoiseModeValue.get() == "1" :
+                mode = 1
+            elif self.bnoiseModeValue.get() == "0" :
+                mode = 0
+            self.callback([int(self.bnoisNBbitValue.get()), int(self.bnoiseMSBValue.get()), mode])
+
+        print("Validate")
+        self.cancel()
+        
+class Interface:
     def __init__(self):
         self.canSelect = True
         self.zoomMax = 10
@@ -140,7 +276,7 @@ class Interface:
         butEvaluation.pack( expand=True ,side=RIGHT, fill=X)
 
     def openImage(self):
-        f_types = [('Png Files', '*.png'),('Jpg Files', '*.jpg')]
+        f_types = [('Image', '*.png *.jpg *.jpeg')]
         self.canSelect = False
         filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./")
         if filename is not None:
@@ -336,17 +472,21 @@ class Interface:
         a = 1
 
     def applyFilter(self):
+        if(hasattr(self, "img") and len(self.listSelectionTk.curselection()) > 0):
+            ParametersInterface(self.root, self.filtrageValue.get(), self.applyFilterWithParameter)
+            
+    def applyFilterWithParameter(self, params):
+        print(params)
         cursel = self.listSelectionTk.curselection()
         for i in range(len(cursel)):
             index = int(cursel[i])
             sel = self.selections[index]
-            self.setFilter(index, self.filtrageValue.get(), [])
+            self.setFilter(index, self.filtrageValue.get(), params)
             self.listSelectionTk.delete(index)
             self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
         self.generateImageAllFilter()
         self.computeImage()
         self.listSelectionTk.selection_clear(0, END)
-            
 
 
     
@@ -415,13 +555,13 @@ class Interface:
         if id >= 0:
             e = self.selections[id]
             if e.filter == "pixel":
-                return filter.imgPixelate(img, 4, e.min, e.max)
+                return filter.imgPixelate(img, e.parameters[0], e.min, e.max)
             elif e.filter == "gauss":
-                return filter.imgBlurring(img, 2, e.min, e.max)
+                return filter.imgBlurring(img, e.parameters[0], e.min, e.max)
             elif e.filter == "partnoise":
-                return filter.imgRandomNoise(img, 0.5, True, e.min, e.max)
+                return filter.imgRandomNoise(img, e.parameters[0], e.parameters[1], e.min, e.max)
             elif e.filter == "bitnoise":
-                return filter.imgFullNoise(img, 2, True, 2,  e.min, e.max)
+                return filter.imgFullNoise(img, e.parameters[0], e.parameters[1], e.parameters[2],  e.min, e.max)
             elif e.filter == "shuffle":
                 return filter.imgShuffle(img, e.min, e.max)
             else :
