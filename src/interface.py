@@ -8,6 +8,7 @@ import src.metric as metric
 
 import src.filter as filter
 import src.yoloDetection as Yolo
+import src.mtcnnDetection as MTCNN
 outputFolder = "output/"
 tmpFileSave = "tmp.png"
 pathModel = "./model/"
@@ -147,17 +148,12 @@ class ParametersInterface:
 
     def validate(self):
         if self.filter == "pixel":
-            print(f"Pixel : {self.pixelValue.get()}")
             self.callback([int(self.pixelValue.get())])
         elif self.filter == "gauss":
-            print(f"Gauss : {self.gaussValue.get()}")
             self.callback([int(self.gaussValue.get())])
-
         elif self.filter == "partnoise":
-            print(f"Partnoise | Chance : {self.pnoiseChanceValue.get()} | Color : {self.pnoiseColorValue.get()}")
             self.callback([float(self.pnoiseChanceValue.get()), int(self.pnoiseColorValue.get())])
         elif self.filter == "bitnoise":
-            print(f"Bitnoise | NBbit : {self.bnoisNBbitValue.get()} | MSB : {self.bnoiseMSBValue.get()} | Mode : {self.bnoiseModeValue.get()}")
             mode = 2
             if self.bnoiseModeValue.get() == "1" :
                 mode = 1
@@ -165,7 +161,6 @@ class ParametersInterface:
                 mode = 0
             self.callback([int(self.bnoisNBbitValue.get()), int(self.bnoiseMSBValue.get()), mode])
 
-        print("Validate")
         self.cancel()
         
 class Interface:
@@ -197,19 +192,19 @@ class Interface:
        
 
         self.canvas = Canvas(self.root, bg='blue')
-        self.canvas.bind_all("<Button-4>", self.canvasZoom)
-        self.canvas.bind_all("<Button-5>", self.canvasZoom)
+        self.canvas.bind("<Button-4>", self.canvasZoom)
+        self.canvas.bind("<Button-5>", self.canvasZoom)
 
-        self.canvas.bind_all("<B3-Motion>", self.canvasPan)
-        self.canvas.bind_all("<Button-3>", self.canvasPanStart)
-        self.canvas.bind_all("<ButtonRelease-3>", self.canvasPanStop)
+        self.canvas.bind("<B3-Motion>", self.canvasPan)
+        self.canvas.bind("<Button-3>", self.canvasPanStart)
+        self.canvas.bind("<ButtonRelease-3>", self.canvasPanStop)
 
-        self.canvas.bind_all("<Button-1>", self.selectionStart)
-        self.canvas.bind_all("<B1-Motion>", self.selectionMotion)
-        self.canvas.bind_all("<ButtonRelease-1>", self.selectionEnd)
+        self.canvas.bind("<Button-1>", self.selectionStart)
+        self.canvas.bind("<B1-Motion>", self.selectionMotion)
+        self.canvas.bind("<ButtonRelease-1>", self.selectionEnd)
 
         #Zone Bouttons
-        self.zoneButtons = Frame(self.root, width=200)
+        self.zoneButtons = Frame(self.root, width=300)
         
         self.butOpenFrame = Frame(self.zoneButtons)
         butOpen = Button(self.butOpenFrame, text="Open Image", justify="center", command=self.openImage)
@@ -239,7 +234,9 @@ class Interface:
 
         #Buttons CNN
         self.zoneCNN = Frame(self.zoneButtons)
-        butDetection= Button(self.zoneCNN, text="Detection", justify="center", command=self.askDetectionCNN)
+        self.zoneDetection= Frame(self.zoneCNN)
+        butDetectionYOLO= Button(self.zoneDetection, text="Detection YOLO", justify="center", command=self.askDetectionYOLO)
+        butDetectionMTCNN= Button(self.zoneDetection, text="Detection MTCNN", justify="center", command=self.askDetectionMTCNN)
         butEvaluation= Button(self.zoneCNN, text="Evaluation", justify="center", command=self.askEvalCNN)
 
 #----
@@ -271,9 +268,12 @@ class Interface:
         butApplyFilter.pack(side=TOP, fill=X)
 
         self.zoneCNN.pack(side=BOTTOM, fill=X)
+        self.zoneDetection.pack(expand=True, side=LEFT, fill=BOTH)
         #zone CNN
-        butDetection.pack( expand=True,side=LEFT, fill=X)
-        butEvaluation.pack( expand=True ,side=RIGHT, fill=X)
+        butDetectionYOLO.pack( expand=True,side=TOP, fill=X)
+        butDetectionMTCNN.pack( expand=True,side=BOTTOM, fill=X)
+        
+        butEvaluation.pack( expand=True ,side=RIGHT, fill=BOTH)
 
     def openImage(self):
         f_types = [('Image', '*.png *.jpg *.jpeg')]
@@ -476,7 +476,6 @@ class Interface:
             ParametersInterface(self.root, self.filtrageValue.get(), self.applyFilterWithParameter)
             
     def applyFilterWithParameter(self, params):
-        print(params)
         cursel = self.listSelectionTk.curselection()
         for i in range(len(cursel)):
             index = int(cursel[i])
@@ -593,7 +592,7 @@ class Interface:
 
         self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | MSE : {mse:.2f} | RMSE : {rmse:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
 
-    def askDetectionCNN(self):
+    def askDetectionYOLO(self):
         if hasattr(self, 'editedImg'):
             if not hasattr(self, 'yolo'):
                 self.yolo = Yolo.Model_YOLO(pathModel)
@@ -603,6 +602,25 @@ class Interface:
                     w, h = self.img.size
                     min = (boxes[i].xmin if boxes[i].xmin > 0 else 0, boxes[i].ymin if boxes[i].ymin > 0 else 0)
                     max = (boxes[i].xmax if boxes[i].xmax < w else w, boxes[i].ymax if boxes[i].ymax < h else h)
+                    element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
+                    sel = Select(min,max ,element)
+                    self.selections.append(sel)
+                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                    self.listSelectionTk.selection_clear(0, END)
+                    self.listChangeSelected(None)
+                self.updateAllSelectionsZoom()
+
+    def askDetectionMTCNN(self):
+        if(hasattr(self,'editedImg')):
+            if not hasattr(self, 'mtcnn'):
+                self.mtcnn = MTCNN.Model_MTCNN()
+            data = self.mtcnn.makePrediction(self.editedImg)
+            if hasattr(self, 'canImg'):
+                for i in range(len(data)):
+                    wImg, hImg = self.img.size
+                    x,y,w,h = data[i][1] #get the box, Box = [x, y, w, h], y' = y+h, x' = x+w
+                    min = (x if x > 0 else 0, y if y > 0 else 0)
+                    max = (x+w if x+w < wImg else wImg, y+h if y+h < hImg else hImg)
                     element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
                     sel = Select(min,max ,element)
                     self.selections.append(sel)
