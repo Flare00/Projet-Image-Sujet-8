@@ -473,10 +473,11 @@ class Interface:
 
     def applyFilter(self):
         if(hasattr(self, "img") and len(self.listSelectionTk.curselection()) > 0):
+            self.tmpSelection = self.listSelectionTk.curselection()
             ParametersInterface(self.root, self.filtrageValue.get(), self.applyFilterWithParameter)
             
     def applyFilterWithParameter(self, params):
-        cursel = self.listSelectionTk.curselection()
+        cursel = self.tmpSelection
         for i in range(len(cursel)):
             index = int(cursel[i])
             sel = self.selections[index]
