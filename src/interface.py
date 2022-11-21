@@ -293,6 +293,7 @@ class Interface:
                 for e in self.selections:  
                     self.canvas.delete(e.element)
                 self.selections.clear()
+                self.listSelectionTk.delete(0, END)
             else :
                 self.canImg = self.canvas.create_image(self.canvas.winfo_width()/2,self.canvas.winfo_height()/2.0, anchor=CENTER, image = self.display)
         self.canSelect = True
