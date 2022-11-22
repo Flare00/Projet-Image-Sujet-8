@@ -41,12 +41,10 @@ class ParametersInterface:
         self.root.grab_set()
         self.root.title(f"{self.filter}")
         self.root.protocol("WM_DELETE_WINDOW", self.onClose )
-        width = 400
-        height = 300
+        width = 300
+        height = 125
         screenWidth = self.root.winfo_screenwidth()
         screenHeight= self.root.winfo_screenheight()
-        alignstr = '%dx%d+%d+%d' % (width, height, (screenWidth - width) / 2, (screenHeight - height) / 2)
-        self.root.geometry(alignstr)
         self.root.resizable(width=False, height=False)
 
         self.ZoneTop = Frame(self.root)
@@ -54,17 +52,18 @@ class ParametersInterface:
         self.ZoneChamps = Frame(self.ZoneTop)
         self.ZoneButton = Frame(self.root)
 
+        pad = 5
         butCancel = Button(self.ZoneButton, text="Cancel", justify="center", command=self.cancel)
         butValidate = Button(self.ZoneButton, text="Validate", justify="center", command=self.validate)
 
-        self.ZoneTop.pack(fill=BOTH, side=TOP, expand=True)
-        self.ZoneButton.pack( fill=X, side=BOTTOM)
+        self.ZoneTop.pack(fill=BOTH, side=TOP, expand=True, padx = pad, pady = pad)
+        self.ZoneButton.pack( fill=X, side=BOTTOM, padx = pad, pady = pad)
 
-        butCancel.pack(fill=X, side=LEFT, expand=True)
-        butValidate.pack(fill=X, side=RIGHT, expand=True)
+        butCancel.pack(fill=X, side=LEFT, expand=True, ipadx = pad)
+        butValidate.pack(fill=X, side=RIGHT, expand=True, ipadx = pad)
 
-        self.ZoneLabels.pack( fill=BOTH, side=LEFT,expand=True)
-        self.ZoneChamps.pack( fill=BOTH, side=RIGHT,expand=True)
+        self.ZoneLabels.pack( fill=BOTH, side=LEFT,expand=True , ipadx = pad)
+        self.ZoneChamps.pack( fill=BOTH, side=RIGHT,expand=True , ipadx = pad)
 
         self.isset = False
 
