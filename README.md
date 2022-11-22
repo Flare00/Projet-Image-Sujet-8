@@ -24,4 +24,9 @@ pip install numpy
 pip install keras  
 pip install tensorflow
 pip install mtcnn
+
+cd src/yolo-coco 
+wget "https://pjreddie.com/media/files/yolov3.weights" 
+cd ../../
 ```
+If you don't have wget, you can also download the weights file (https://pjreddie.com/media/files/yolov3.weights) and put it in src/yolo-coco
