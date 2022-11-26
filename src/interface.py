@@ -9,6 +9,7 @@ import src.metric as metric
 import src.filter as filter
 import src.yoloDetection as Yolo
 import src.mtcnnDetection as MTCNN
+import src.srgan as SRGAN
 outputFolder = "output/"
 tmpFileSave = "tmp.png"
 pathModel = "./model/"
@@ -20,6 +21,7 @@ def initInterface():
 def startInterface():
     global app
     app.root.mainloop()
+
 class Select:
     def __init__(self, min : tuple, max : tuple, element):
         self.min = min
@@ -634,3 +636,8 @@ class Interface:
     def askEvalCNN(self):
         if hasattr(self, 'editedImg'):
             print("Execute Evaluation CNN")
+            if not hasattr(self, "srgan"):
+                self.srgan = SRGAN.SRGAN()
+            if len(self.selections) > 0 :
+                min, max = self.selections[0].min , self.selections[0].max
+                self.srgan.makePrediction(filter.cropImage(self.editedImg, min, max).copy())
