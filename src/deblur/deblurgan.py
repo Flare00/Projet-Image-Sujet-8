@@ -1,11 +1,10 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, Add,\
-                                    BatchNormalization, Activation, LeakyReLU, UpSampling2D, Lambda
-from tensorflow.keras.models import Model
-
-from src.deblur.layer_utils import ReflectionPadding2D, res_block
 import numpy as np
 from PIL import Image
+from keras.layers import Input, Conv2D, Flatten, Dense, Add, BatchNormalization, Activation, LeakyReLU, UpSampling2D, Lambda
+from keras.models import Model
+from src.deblur.layer_utils import ReflectionPadding2D, res_block
+
 # the paper defined hyper-parameter:chr
 channel_rate = 64
 # Note the image_shape must be multiple of patch_shape

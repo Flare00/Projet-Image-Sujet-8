@@ -1,8 +1,7 @@
 import tensorflow as tf
 
-from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, Add,\
-                                    BatchNormalization, Activation, LeakyReLU,PReLU, Layer, InputSpec
-from tensorflow.keras.models import Model
+from keras.layers import Input, Conv2D, Add, BatchNormalization, Activation, Layer, InputSpec
+from keras.models import Model
 
 from keras.utils import conv_utils
 from keras.layers.core import Dropout

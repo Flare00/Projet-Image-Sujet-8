@@ -9,12 +9,15 @@ import src.metric as metric
 import src.filter as filter
 import src.yoloDetection as Yolo
 import src.mtcnnDetection as MTCNN
-import src.edsr as edsr
+import src.superResolution.edsr as edsr
 import src.deblur.deblurgan as deblur
 
 outputFolder = "output/"
 tmpFileSave = "tmp.png"
 pathModel = "./model/"
+weightsEDSR = "src/superResolution/edsr_weights.h5"
+weightsDEBLUR = "src/deblur/deblur.h5"
+
 
 def initInterface():
     global app
@@ -638,10 +641,10 @@ class Interface:
             print("Execute Evaluation CNN")
             if not hasattr(self, "edsrgan"):
                 self.edsrgan = edsr.edsr(scale=4, num_res_blocks=16)
-                self.edsrgan.load_weights('src/super-resolution/edsr_weights.h5')
+                self.edsrgan.load_weights(weightsEDSR)
             if not hasattr(self, "deblurgan"):
                 self.deblurgan = deblur.generator_model()
-                self.deblurgan.load_weights('src/deblur/deblur.h5')
+                self.deblurgan.load_weights(weightsDEBLUR)
             res = self.editedImg.copy()
             for i in range(len(self.selections)):
                 min = (self.selections[i].min[0], self.selections[i].min[1])
