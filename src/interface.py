@@ -3,15 +3,14 @@
 from tkinter import *
 from tkinter import filedialog
 from PIL import ImageTk, Image
+import numpy as np
 
 import src.metric as metric
-
 import src.filter as filter
 import src.yoloDetection as Yolo
 import src.mtcnnDetection as MTCNN
 import src.edsr as edsr
-import numpy as np
-# import src.srgan as SRGAN
+
 outputFolder = "output/"
 tmpFileSave = "tmp.png"
 pathModel = "./model/"
@@ -646,5 +645,3 @@ class Interface:
                 imgToTreat = filter.resizeByPixelSize(filter.cropImage(self.editedImg, min, max).copy())
                 res = Image.fromarray(np.uint8(edsr.resolve_single(self.edsrgan, np.array(imgToTreat))))
                 res.show()
-                
-        

@@ -15,7 +15,6 @@ Khélian LARVET
 - NumPy : v1.23.4
 - Keras : v2.10.0
 - TensorFlow : v2.10.0
-- TensorFlow addons : v0.18
 - MTCNN architecture : v0.1.1
 
 ```console
@@ -24,7 +23,6 @@ pip install pillow
 pip install numpy  
 pip install keras  
 pip install tensorflow
-pip install tensorflow-addons
 pip install mtcnn
 
 cd src/yolo-coco 
