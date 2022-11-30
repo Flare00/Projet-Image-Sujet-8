@@ -9,7 +9,9 @@ import src.metric as metric
 import src.filter as filter
 import src.yoloDetection as Yolo
 import src.mtcnnDetection as MTCNN
-import src.srgan as SRGAN
+import src.edsr as edsr
+import numpy as np
+# import src.srgan as SRGAN
 outputFolder = "output/"
 tmpFileSave = "tmp.png"
 pathModel = "./model/"
@@ -279,7 +281,7 @@ class Interface:
     def openImage(self):
         f_types = [('Image', '*.png *.jpg *.jpeg')]
         self.canSelect = False
-        filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./")
+        filename = filedialog.askopenfile(filetypes=f_types, initialdir = "./input/")
         if filename is not None:
             self.img = Image.open(filename.name)
             self.editedImg = self.img
@@ -636,8 +638,13 @@ class Interface:
     def askEvalCNN(self):
         if hasattr(self, 'editedImg'):
             print("Execute Evaluation CNN")
-            if not hasattr(self, "srgan"):
-                self.srgan = SRGAN.SRGAN()
+            if not hasattr(self, "edsrgan"):
+                self.edsrgan = edsr.edsr(scale=4, num_res_blocks=16)
+                self.edsrgan.load_weights('src/super-resolution/edsr_weights.h5')
             if len(self.selections) > 0 :
                 min, max = self.selections[0].min , self.selections[0].max
-                self.srgan.makePrediction(filter.cropImage(self.editedImg, min, max).copy())
+                imgToTreat = filter.resizeByPixelSize(filter.cropImage(self.editedImg, min, max).copy())
+                res = Image.fromarray(np.uint8(edsr.resolve_single(self.edsrgan, np.array(imgToTreat))))
+                res.show()
+                
+        

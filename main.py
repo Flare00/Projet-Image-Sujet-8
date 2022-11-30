@@ -9,6 +9,30 @@ import src.interface as interface
 print("[INFO] TensorFlow Loaded.")
 
 def main():
+
+    """
+    img = Image.open("input/imgtest.jpg")
+    w,h = img.size
+    imgPixel = filter.imgPixelate(img, 4, (0, 0), (w, h))
+    pixel = filter.resizeByPixelSize(imgPixel)
+    
+    
+    model = edsr.edsr(scale=4, num_res_blocks=16)
+    model.load_weights('src/super-resolution/edsr_weights.h5')
+
+    #lr = np.array(imgPixel)
+    sr = resolve_single(model, np.array(pixel))
+    #sr = resolve_single(model, np.array(Image.open("sr.jpg")))
+
+    #img = Image.fromarray(np.uint8(lr))
+    #img.save("lr.jpg")
+    sr = Image.fromarray(np.uint8(sr))
+    sr.save("sre.jpg")
+    
+    # pixel.save("pixel.jpg")
+    # imgPixel.save("lr.jpg")
+    """
+
     interface.initInterface()
     interface.startInterface()
 

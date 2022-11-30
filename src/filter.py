@@ -100,3 +100,36 @@ def imgShuffle(img, min, max):
     res.paste(Image.fromarray(cropData.astype('uint8')), min)
 
     return res
+
+def resizeByPixelSize(img):
+    w,h = img.size
+    nbPixelPerW = []
+    nbPixelPerH = []
+    
+    lastPixel= img.getpixel((0,0))
+
+    for y in range (0,h):
+        nbPixel = 0
+        for x in range(1,w):
+            pixel = img.getpixel((x,y))
+            if(pixel != lastPixel):
+                nbPixel = nbPixel + 1
+                lastPixel = pixel
+        nbPixelPerW.append(nbPixel)
+    
+    for x in range (0,w):
+        nbPixel = 0
+        for y in range(1,h):
+            pixel = img.getpixel((x,y))
+            if(pixel != lastPixel):
+                nbPixel = nbPixel + 1
+                lastPixel = pixel
+        nbPixelPerH.append(nbPixel)
+    
+    moyW = sum(nbPixelPerW) / len(nbPixelPerW)
+    moyH = sum(nbPixelPerH) / len(nbPixelPerH)
+
+    print(moyH, moyW)
+    
+    return img.resize((int(abs(moyW)), int(abs(moyH))), resample=Image.Resampling.NEAREST)
+    
