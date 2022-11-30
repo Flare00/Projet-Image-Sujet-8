@@ -647,8 +647,13 @@ class Interface:
 
 
             if len(self.selections) > 0 :
-                min, max = self.selections[0].min , self.selections[0].max
-                imgToTreat = filter.resizeByPixelSize(filter.cropImage(self.editedImg, min, max).copy())
-                res = Image.fromarray(np.uint8(edsr.resolve_single(self.edsrgan, np.array(imgToTreat))))
+                min = (self.selections[0].min[0], self.selections[0].min[1])
+                max = self.selections[0].max
+
+                srImg = filter.resizeByPixelSize(filter.cropImage(self.editedImg, min, max).copy())
+                srImg = Image.fromarray(np.uint8(edsr.resolve_single(self.edsrgan, np.array(srImg))))
+                srImg = srImg.resize((max[0] - min[0], max[1] - min[1]))
                 #res = deblur.resolve(self.deblurgan, filter.cropImage(self.editedImg, min, max).copy())
+                res = self.editedImg.copy()
+                res.paste(srImg, (min[0],min[1]))
                 res.show()
