@@ -10,6 +10,7 @@ import src.filter as filter
 import src.yoloDetection as Yolo
 import src.mtcnnDetection as MTCNN
 import src.edsr as edsr
+import src.deblur.deblurgan as deblur
 
 outputFolder = "output/"
 tmpFileSave = "tmp.png"
@@ -640,8 +641,14 @@ class Interface:
             if not hasattr(self, "edsrgan"):
                 self.edsrgan = edsr.edsr(scale=4, num_res_blocks=16)
                 self.edsrgan.load_weights('src/super-resolution/edsr_weights.h5')
+            if not hasattr(self, "deblurgan"):
+                self.deblurgan = deblur.generator_model()
+                self.deblurgan.load_weights('src/deblur/deblur.h5')
+
+
             if len(self.selections) > 0 :
                 min, max = self.selections[0].min , self.selections[0].max
                 imgToTreat = filter.resizeByPixelSize(filter.cropImage(self.editedImg, min, max).copy())
                 res = Image.fromarray(np.uint8(edsr.resolve_single(self.edsrgan, np.array(imgToTreat))))
+                #res = deblur.resolve(self.deblurgan, filter.cropImage(self.editedImg, min, max).copy())
                 res.show()
