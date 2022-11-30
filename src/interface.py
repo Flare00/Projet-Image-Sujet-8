@@ -589,13 +589,11 @@ class Interface:
 
     def computeMetrics(self):
         psnr = metric.metric_PSNR(self.img, self.editedImg)
-        mse = metric.metric_MSE(self.img, self.editedImg)
-        rmse = metric.metric_RMSE(self.img, self.editedImg)
         sam = metric.metric_SAM(self.img, self.editedImg)
         ssim = metric.metric_SSIM(self.img, self.editedImg)
         haar = metric.metric_HaarPSI(self.img, self.editedImg)
 
-        self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | MSE : {mse:.2f} | RMSE : {rmse:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
+        self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
 
     def askDetectionYOLO(self):
         if hasattr(self, 'editedImg'):
@@ -644,16 +642,14 @@ class Interface:
             if not hasattr(self, "deblurgan"):
                 self.deblurgan = deblur.generator_model()
                 self.deblurgan.load_weights('src/deblur/deblur.h5')
-
-
-            if len(self.selections) > 0 :
-                min = (self.selections[0].min[0], self.selections[0].min[1])
-                max = self.selections[0].max
+            res = self.editedImg.copy()
+            for i in range(len(self.selections)):
+                min = (self.selections[i].min[0], self.selections[i].min[1])
+                max = self.selections[i].max
 
                 srImg = filter.resizeByPixelSize(filter.cropImage(self.editedImg, min, max).copy())
                 srImg = Image.fromarray(np.uint8(edsr.resolve_single(self.edsrgan, np.array(srImg))))
                 srImg = srImg.resize((max[0] - min[0], max[1] - min[1]))
                 #res = deblur.resolve(self.deblurgan, filter.cropImage(self.editedImg, min, max).copy())
-                res = self.editedImg.copy()
                 res.paste(srImg, (min[0],min[1]))
-                res.show()
+            res.show()
