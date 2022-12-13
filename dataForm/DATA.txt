@@ -1,4 +1,4 @@
-	PNSR	SAM	SSIM	HAAR	PERS
+		PNSR	SAM		SSIM	HAAR	PERS
 
 pix_10: 34.46	0.17	0.55	0.36	0.80
 pix_18: 34.46	0.21	0.52	0.31	0.86
@@ -10,3 +10,18 @@ blr_18: 32.54	0.27	0.53	0.40	0.26
 
 att_06:	29.33	0.42	0.24	0.30	0.13
 rec_06: 29.17 	0.44 	0.28 	0.51	0.13
+
+--- CNN ---
+PIX : < 36 (0.21 HaarPSI)	Secure
+BLR : < 40 (0.25 HaarPSI) 	Secure
+NSE : < 0.85 (0.34 HaarPSI) 	!RECONNAISSABLE HUMAIN (depend de la taille)
+MSB : < 2 (0.40 HaarPSI) 	!RECONNAISSABLE HUMAIN
+
+CNN vs Human
+PIX : 0.20 <> 0.25 (10%)
+BLR : 0.25 <> 0.40 (25%)
+NSE : 0.34 <> 0.20 (10%)
+MSB : 2 (0.40) <> 3 (0.27) (10%)
+
+-- 
+ 
