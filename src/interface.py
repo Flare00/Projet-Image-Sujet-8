@@ -28,11 +28,12 @@ def startInterface():
     app.root.mainloop()
 
 class Select:
-    def __init__(self, min : tuple, max : tuple, element):
+    def __init__(self, min : tuple, max : tuple, element, security : int):
         self.min = min
         self.max = max
         self.element = element
         self.filter = None
+        self.security = security
         self.parameters = []
 
     def setFilter(self, filter, parameters) :
@@ -405,7 +406,7 @@ class Interface:
                     sel = self.computeImageSelection(min, max)
                     if sel is not None :
                         self.selections.append(sel)
-                        self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                        self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter} | Sécurisée à {sel.security}%")
                         self.listSelectionTk.selection_clear(0, END)
                         self.listSelectionTk.selection_set(END)
                         self.listChangeSelected(None)
@@ -453,10 +454,10 @@ class Interface:
             return None
 
         element = self.canvas.create_rectangle(min[0], min[1], max[0], max[1], outline="#0f0")
-        res = Select(imgSelMin, imgSelMax, element)
+        res = Select(imgSelMin, imgSelMax, element, self.computeSecurity(imgSelMin, imgSelMax))
         self.updateSelectionZoom(res, minSelCan, wRatio, hRatio)
 
-        return Select(imgSelMin, imgSelMax, element)
+        return res#Select(imgSelMin, imgSelMax, element, )
 
     def updateSelectionZoom(self, sel : Select,posMin : tuple, wRatio, hRatio):
         imgSelMin = (((sel.min[0])*wRatio) + posMin[0], ((sel.min[1])*hRatio) + posMin[1])
@@ -490,10 +491,12 @@ class Interface:
             sel = self.selections[index]
             self.setFilter(index, self.filtrageValue.get(), params)
             self.listSelectionTk.delete(index)
-            self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+            self.listSelectionTk.insert(index, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter} | Sécurisée à {sel.security}%")
         self.generateImageAllFilter()
         self.computeImage()
         self.listSelectionTk.selection_clear(0, END)
+        self.computeSecurityList()
+        
 
 
     
@@ -553,6 +556,7 @@ class Interface:
                 self.listSelectionTk.selection_set(index)
         self.generateImageAllFilter()
         self.computeImage()
+        self.computeSecurityList()
 
     def setFilter(self, id, filter, parameters):
         if id >= 0:
@@ -591,17 +595,8 @@ class Interface:
         return None
 
     def computeMetrics(self):
-        psnr = metric.metric_PSNR(self.img, self.editedImg)
-        sam = metric.metric_SAM(self.img, self.editedImg)
-        ssim = metric.metric_SSIM(self.img, self.editedImg)
-        haar = metric.metric_HaarPSI(self.img, self.editedImg)
-        # haar = 0.20 : 100% / haar = 0.20 = 100% / 1.0 = 0% 
-        percent = int(100 - ((haar-0.2) * (10/6) * 100))
-        if percent > 100 :
-            percent = 100
-        elif percent < 0 :
-            percent = 0
-        self.labelMetrics.config(text = f"Sécurisé à {percent}% {'(Satisfaisant)' if haar < 0.25 else ''} ")
+        percent = self.computeSecurity((0,0), (self.img.width, self.img.height))
+        self.labelMetrics.config(text = f"Sécurisée à {percent}% {'(Satisfaisant)' if percent > 90 else ''} ")
 
     def askDetectionYOLO(self):
         if hasattr(self, 'editedImg'):
@@ -614,9 +609,9 @@ class Interface:
                     min = (boxes[i].xmin if boxes[i].xmin > 0 else 0, boxes[i].ymin if boxes[i].ymin > 0 else 0)
                     max = (boxes[i].xmax if boxes[i].xmax < w else w, boxes[i].ymax if boxes[i].ymax < h else h)
                     element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
-                    sel = Select(min,max ,element)
+                    sel = Select(min,max ,element, self.computeSecurity(min, max))
                     self.selections.append(sel)
-                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter} | Sécurisée à {sel.security}%")
                     self.listSelectionTk.selection_clear(0, END)
                     self.listChangeSelected(None)
                 self.updateAllSelectionsZoom()
@@ -633,14 +628,37 @@ class Interface:
                     min = (x if x > 0 else 0, y if y > 0 else 0)
                     max = (x+w if x+w < wImg else wImg, y+h if y+h < hImg else hImg)
                     element = self.canvas.create_rectangle(0, 0, 1, 1, outline="#0f0")
-                    sel = Select(min,max ,element)
+                    sel = Select(min,max ,element, self.computeSecurity(min, max))
                     self.selections.append(sel)
-                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter}")
+                    self.listSelectionTk.insert(END, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter} | Sécurisée à {sel.security}%")
                     self.listSelectionTk.selection_clear(0, END)
                     self.listChangeSelected(None)
                 self.updateAllSelectionsZoom()
 
 
+    def computeSecurity(self, min : tuple, max : tuple) -> int :
+        #psnr = metric.metric_PSNR(self.img, self.editedImg)
+        #sam = metric.metric_SAM(self.img, self.editedImg)
+        #ssim = metric.metric_SSIM(self.img, self.editedImg)
+        value = metric.metric_HaarPSI(filter.cropImage(self.img, min, max), filter.cropImage(self.editedImg, min, max))
+        # 0.8 = 0% / 0.2 = 100%
+        percent = int(100 - ((value-0.2) * (10/6) * 100))
+        if percent > 100 :
+            percent = 100
+        elif percent < 0 :
+            percent = 0
+        return percent
+    
+    def computeSecurityList(self):
+        for id in range(len(self.selections)):
+            sel = self.selections[id];
+            lSec = sel.security;
+            sel.security = self.computeSecurity(sel.min, sel.max)
+            if lSec != sel.security :
+                self.listSelectionTk.delete(id)
+                self.listSelectionTk.insert(id, f"[{sel.min[0]}, {sel.max[0]}] | [{sel.min[1]}, {sel.max[1]}] | {sel.filter} | Sécurisée à {sel.security}%")
+                
+   
     def askEvalCNN(self):
         if hasattr(self, 'editedImg'):
             if not hasattr(self, "edsrgan"):
