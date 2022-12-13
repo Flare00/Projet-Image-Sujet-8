@@ -243,7 +243,7 @@ class Interface:
         self.zoneDetection= Frame(self.zoneCNN)
         butDetectionYOLO= Button(self.zoneDetection, text="Detection YOLO", justify="center", command=self.askDetectionYOLO)
         butDetectionMTCNN= Button(self.zoneDetection, text="Detection MTCNN", justify="center", command=self.askDetectionMTCNN)
-        butEvaluation= Button(self.zoneCNN, text="Evaluation", justify="center", command=self.askEvalCNN)
+        butEvaluation= Button(self.zoneCNN, text="Attaque", justify="center", command=self.askEvalCNN)
 
 #----
         #elements Placement
@@ -595,8 +595,13 @@ class Interface:
         sam = metric.metric_SAM(self.img, self.editedImg)
         ssim = metric.metric_SSIM(self.img, self.editedImg)
         haar = metric.metric_HaarPSI(self.img, self.editedImg)
-
-        self.labelMetrics.config(text = f"PSNR : {psnr:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
+        # haar = 0.20 : 100% / haar = 0.20 = 100% / 1.0 = 0% 
+        percent = int(100 - ((haar-0.2) * (10/6) * 100))
+        if percent > 100 :
+            percent = 100
+        elif percent < 0 :
+            percent = 0
+        self.labelMetrics.config(text = f"Sécurisé à {percent}% {'(Satisfaisant)' if haar < 0.25 else ''} ")
 
     def askDetectionYOLO(self):
         if hasattr(self, 'editedImg'):
@@ -638,13 +643,14 @@ class Interface:
 
     def askEvalCNN(self):
         if hasattr(self, 'editedImg'):
-            print("Execute Evaluation CNN")
             if not hasattr(self, "edsrgan"):
                 self.edsrgan = edsr.edsr(scale=4, num_res_blocks=16)
                 self.edsrgan.load_weights(weightsEDSR)
+            """
             if not hasattr(self, "deblurgan"):
                 self.deblurgan = deblur.generator_model()
                 self.deblurgan.load_weights(weightsDEBLUR)
+            """
             res = self.editedImg.copy()
             for i in range(len(self.selections)):
                 min = (self.selections[i].min[0], self.selections[i].min[1])
@@ -655,4 +661,11 @@ class Interface:
                 srImg = srImg.resize((max[0] - min[0], max[1] - min[1]))
                 #res = deblur.resolve(self.deblurgan, filter.cropImage(self.editedImg, min, max).copy())
                 res.paste(srImg, (min[0],min[1]))
-            res.show()
+            """   
+            psnr = metric.metric_PSNR(self.img, res)
+            sam = metric.metric_SAM(self.img, res)
+            ssim = metric.metric_SSIM(self.img, res)
+            haar = metric.metric_HaarPSI(self.img, res)
+            print(f"PSNR : {psnr:.2f} | SAM : {sam:.2f} | SSIM : {ssim:.2f} | HAAR : {haar:.2f}")
+            """
+            res.save("attaque.png")
